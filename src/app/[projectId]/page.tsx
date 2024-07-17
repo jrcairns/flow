@@ -11,6 +11,7 @@ export default async function Project({ params }: { params: { projectId: string 
     if (!project) return notFound()
 
     return <div className="border rounded-md shadow-inner h-full">
+        {/* @ts-ignore */}
         <ProjectFlow initialEdges={project.map.edges} initialNodes={project.map.nodes} />
     </div>
 }

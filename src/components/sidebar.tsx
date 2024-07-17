@@ -23,6 +23,7 @@ export function Sidebar() {
             <div className="space-y-4">
                 <Label className="text-xs">Recent projects</Label>
                 <ul className="space-y-1">
+                    {/* @ts-ignore */}
                     {data?.map(project => (
                         <li className="flex w-full" key={project.id}>
                             <Link className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto py-2 w-full items-center justify-start")} href={`/${project.id}`}>

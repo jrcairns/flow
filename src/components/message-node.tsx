@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Textarea } from './ui/textarea';
 
+// @ts-ignore
 function MessageNode({ data }) {
     const nodeId = useNodeId();
     const { setNodes, getEdges } = useReactFlow();

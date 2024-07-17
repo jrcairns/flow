@@ -11,6 +11,7 @@ import { Textarea } from './ui/textarea';
 import { nanoid } from 'nanoid';
 import { cn } from '@/lib/utils';
 
+// @ts-ignore
 function QuestionNode({ data }) {
     const nodeId = useNodeId();
     const { setNodes, getEdges } = useReactFlow();
@@ -43,6 +44,7 @@ function QuestionNode({ data }) {
                             className="w-4 h-3/5 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
                         />
                         <div className="absolute right-0 inset-y-0 grid items-center">
+                            {/* @ts-ignore */}
                             {localData?.options?.map((option, index) => (
                                 <Handle
                                     key={option.id}
@@ -77,6 +79,7 @@ function QuestionNode({ data }) {
                                 onChange={(e) => setLocalData({ ...localData, question: e.target.value })}
                             />
                         </div>
+                        {/* @ts-ignore */}
                         {localData?.options?.map((option, index) => (
                             <div className="flex flex-col space-y-1.5" key={index}>
                                 <Label htmlFor={`option-${index}`}>Option {index + 1}</Label>

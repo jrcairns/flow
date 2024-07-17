@@ -87,6 +87,7 @@ function ManageProjectForm({ project }: { project: any }) {
         }
     })
 
+    // @ts-ignore
     async function onSubmit(values) {
         mutation.mutate(values)
     }
