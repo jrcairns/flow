@@ -36,6 +36,11 @@ export default function Home() {
         } catch (error) {
           return
         }
+      } else {
+        setData({
+          nodes: initialNodes,
+          edges: []
+        })
       }
 
       setIsLoaded(true)

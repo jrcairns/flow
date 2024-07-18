@@ -399,6 +399,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                 nodes={nodes}
                 edges={edges}
                 minZoom={0.1}
+                maxZoom={1}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
@@ -510,7 +511,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     <SignIn />
                 </DialogContent>
             </Dialog>
-        </DirectionContext.Provider>
+        </DirectionContext.Provider >
     );
 };
 
