@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html className="h-full" lang="en">
-      <body className="h-full">
+    <html lang="en">
+      <body>
         <ClerkProvider
           appearance={{
             baseTheme: dark,
