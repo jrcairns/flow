@@ -18,7 +18,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { FoldHorizontal, FoldVertical, Loader2, UploadCloud, WandSparkles } from "lucide-react";
+import { ChevronUp, FoldHorizontal, FoldVertical, Loader2, UploadCloud, WandSparkles } from "lucide-react";
 import { nanoid } from 'nanoid';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { SignIn, useUser } from '@clerk/nextjs';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -366,7 +367,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
             return data
         },
         onSuccess(data) {
-            router.push(`/${data.id}`)
+            router.push(`/p/${data.id}`)
         },
     })
 
@@ -438,8 +439,20 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     </div>
                 </Panel>
                 <Panel className="space-x-2" position="bottom-center">
-                    <Button onClick={addNewQuestion}>Add Node</Button>
-                    <Button variant="ghost" onClick={addFinalNode}>Final Node</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>Add node <ChevronUp className="h-3.5 w-3.5 ml-2" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="text-xs">
+                            <DropdownMenuItem onClick={addNewQuestion} className="text-xs">
+                                New question
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={addFinalNode} className="text-xs">
+                                Final message
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    {/* <Button variant="ghost" onClick={addFinalNode}>Final Node</Button> */}
                 </Panel>
                 <Panel position="top-right">
                     {isSignedIn ? (
