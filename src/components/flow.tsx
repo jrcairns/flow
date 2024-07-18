@@ -176,6 +176,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     const updatedNodes = nds.concat(newNode);
                     const updatedSourceNode = updatedNodes.find(node => node.id === connecting.nodeId);
                     if (updatedSourceNode) {
+                        // @ts-ignore
                         updatedSourceNode.data.options = updatedSourceNode.data.options.map(opt =>
                             opt.id === connecting.handleId ? { ...opt, nextNodeId: id } : opt
                         );
@@ -309,6 +310,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
 
             nodes.forEach(node => {
                 if (node.type === 'question') {
+                    // @ts-ignore
                     node.data.options.forEach(option => {
                         // Check if this option doesn't have a next node or if its next node doesn't exist
                         const nextNodeExists = nodes.some(n => n.id === option.nextNodeId);
