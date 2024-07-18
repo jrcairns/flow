@@ -3,13 +3,18 @@ import { SignUp } from "@clerk/nextjs";
 export default function Page() {
     return (
         <div className="min-h-screen flex bg-muted/30 p-2">
-            <div className="w-1/2 ml-auto border rounded-md bg-background p-4 flex items-center">
-                <div className="-translate-x-1/2 bg-background rounded-md">
-                    <SignUp appearance={{
-                        variables: {
-                            colorInputBackground: "transparent"
-                        }
-                    }} />
+            <div className="flex-1 relative flex items-center justify-center">
+                <SignUp appearance={{
+                    variables: {
+                        colorBackground: "black",
+                        colorInputBackground: "transparent"
+                    }
+                }} />
+            </div>
+            <div className="flex-1 border rounded-md bg-background flex items-center overflow-hidden">
+                <div className="p-12 relative">
+                    <img className="h-full w-full object-cover" src="/ui.png" alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
                 </div>
             </div>
         </div>
