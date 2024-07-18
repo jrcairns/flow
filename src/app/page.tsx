@@ -21,7 +21,7 @@ const initialNodes = [
 export default function Home() {
   return (
     <div className="h-screen">
-      <Flow initialNodes={data.map.nodes} initialEdges={data.map.edges} />
+      <Flow initialNodes={[]} initialEdges={[]} />
     </div>
   );
 }

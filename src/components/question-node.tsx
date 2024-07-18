@@ -1,23 +1,20 @@
 "use client"
 
-import React, { memo, useMemo, useState } from 'react';
-import { Handle, Position, useNodeId, useReactFlow, useStore } from '@xyflow/react';
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import { Textarea } from './ui/textarea';
-import { nanoid } from 'nanoid';
 import { cn } from '@/lib/utils';
-import { useDirection } from './flow';
+import { Handle, Position, useNodeId, useReactFlow, useStore, useUpdateNodeInternals } from '@xyflow/react';
+import { nanoid } from 'nanoid';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { Textarea } from './ui/textarea';
 
-// @ts-ignore
 function QuestionNode({ data }) {
-    const direction = "TR"
-    // const { direction } = useDirection()
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
+    const updateNodeInternals = useUpdateNodeInternals();
     const [localData, setLocalData] = useState(data);
 
     const edges = useStore((store) => store.edges);
@@ -26,11 +23,24 @@ function QuestionNode({ data }) {
         return new Set(edges.filter(edge => edge.source === nodeId).map(edge => edge.sourceHandle));
     }, [edges, nodeId]);
 
-    const updateNodeData = () => {
+    const updateNodeData = useCallback(() => {
         setNodes(nodes => nodes.map(node =>
             node.id === nodeId ? { ...node, data: localData } : node
         ));
-    };
+        updateNodeInternals(nodeId);
+    }, [nodeId, localData, setNodes, updateNodeInternals]);
+
+    const addNewOption = useCallback(() => {
+        const newOption = { id: nanoid(), text: '', nextNodeId: null };
+        setLocalData(prevState => ({
+            ...prevState,
+            options: [...prevState.options, newOption]
+        }));
+    }, []);
+
+    useEffect(() => {
+        updateNodeInternals(nodeId);
+    }, [localData.options, nodeId, updateNodeInternals]);
 
     return (
         <div>
@@ -47,16 +57,11 @@ function QuestionNode({ data }) {
                             className="w-3/5 h-4 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
                         />
                         <div className="absolute px-2 translate-y-1/2 bottom-0 inset-x-0 grid gap-2 items-center" style={{ gridTemplateColumns: `repeat(${localData?.options?.length}, minmax(0, 1fr))` }}>
-                            {/* @ts-ignore */}
                             {localData?.options?.map((option, index) => (
                                 <Handle
                                     key={option.id}
                                     type="source"
                                     position={Position.Bottom}
-                                    onClick={(event) => {
-                                        event.stopPropagation()
-                                        alert('hit')
-                                    }}
                                     id={option.id}
                                     style={{ position: "unset" }}
                                     className={cn(
@@ -68,7 +73,7 @@ function QuestionNode({ data }) {
                         </div>
 
                         <Badge className="rounded-full mb-1.5 !text-xs">{localData.options?.length ?? 0} answers</Badge>
-                        <span className="line-clamp-2 min-h-[2lh] text-base">{data.question}</span>
+                        <span className="line-clamp-2 min-h-[2lh] text-base">{localData.question}</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="p-0 gap-0 [--gutter:theme(spacing.4)] flex flex-col">
@@ -83,12 +88,11 @@ function QuestionNode({ data }) {
                                 rows={2}
                                 id="question"
                                 value={localData.question}
-                                onChange={(e) => setLocalData({ ...localData, question: e.target.value })}
+                                onChange={(e) => setLocalData(prevState => ({ ...prevState, question: e.target.value }))}
                             />
                         </div>
-                        {/* @ts-ignore */}
                         {localData?.options?.map((option, index) => (
-                            <div className="flex flex-col space-y-1.5" key={index}>
+                            <div className="flex flex-col space-y-1.5" key={option.id}>
                                 <Label htmlFor={`option-${index}`}>Option {index + 1}</Label>
                                 <Input
                                     id={`option-${index}`}
@@ -96,15 +100,12 @@ function QuestionNode({ data }) {
                                     onChange={(e) => {
                                         const newOptions = [...localData.options];
                                         newOptions[index] = { ...newOptions[index], text: e.target.value };
-                                        setLocalData({ ...localData, options: newOptions });
+                                        setLocalData(prevState => ({ ...prevState, options: newOptions }))
                                     }}
                                 />
                             </div>
                         ))}
-                        <Button onClick={() => setLocalData({
-                            ...localData,
-                            options: [...localData.options, { id: nanoid(), text: '', nextNodeId: null }]
-                        })}>
+                        <Button onClick={addNewOption}>
                             Add Option
                         </Button>
                     </div>
