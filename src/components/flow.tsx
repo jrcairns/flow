@@ -24,15 +24,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import MessageNode from './message-node';
 import QuestionNode from './question-node';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { Input } from './ui/input';
 import { Popover, PopoverContent } from './ui/popover';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { SignIn, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/nextjs';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import Link from 'next/link';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -415,8 +416,9 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                     <Background className="dark:opacity-70" />
                 </div>
                 <Controls />
-                <Panel position="top-left">
-                    <Tabs value={direction} onValueChange={value => {
+                <SignedIn>
+                    <Panel position="top-left">
+                        {/* <Tabs value={direction} onValueChange={value => {
                         onLayout(value)
                         setDirection(value as "TB" | "LR")
                     }}>
@@ -428,8 +430,15 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 <FoldVertical className="w-3.5 h-3.5" />
                             </TabsTrigger>
                         </TabsList>
-                    </Tabs>
-                </Panel>
+                    </Tabs> */}
+                        <UserButton />
+                    </Panel>
+                </SignedIn>
+                <SignedOut>
+                    <Panel position="top-left">
+                        <Link href="/?dialog=auth" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>Log in</Link>
+                    </Panel>
+                </SignedOut>
                 <Panel className="hidden lg:block max-w-md w-full mt-5" position="top-center">
                     <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
                         <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
