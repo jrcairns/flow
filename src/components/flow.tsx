@@ -397,11 +397,12 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     </Tabs>
                 </Panel>
                 <Panel className="max-w-md w-full" position="top-center">
-                    <div className="relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
-                        <Input placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
-                        <Button>
-                            Generate <WandSparkles className="h-3.5 w-3.5 ml-2" />
+                    <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
+                        <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
+                        <Button disabled>
+                            Generate ✨
                         </Button>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-muted/30 backdrop-blur-sm border text-[11px] px-1 text-muted-foreground/50 rounded-md">Coming soon 🎉</div>
                     </div>
                 </Panel>
                 <Panel className="space-x-2" position="bottom-center">
