@@ -35,6 +35,7 @@ const nodeTypes = {
 };
 
 const HORIZONTAL_SPACING = 375; // Adjust this value as needed
+const VERTICAL_SPACING = 200; // Adjust this value as needed
 
 const dagreGraph = new dagre.graphlib.Graph();
 
@@ -139,7 +140,6 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
     }, []);
 
     const onConnectEnd = useCallback(
-        // @ts-ignore
         (event) => {
             const connecting = connectingNodeId.current;
             if (!connecting) return;
@@ -149,19 +149,18 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
             if (targetIsPane) {
                 const id = nanoid();
                 const existingNodes = getNodes();
-                const lastNode = existingNodes[existingNodes.length - 1];
-                const newNodeX = lastNode ? lastNode.position.x + HORIZONTAL_SPACING : HORIZONTAL_SPACING;
+                const sourceNode = existingNodes.find(node => node.id === connecting.nodeId);
+
+                if (!sourceNode) return;
+
+                const newNodePosition = screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
 
                 const newNode = {
                     id,
-                    // position: {
-                    //     x: newNodeX,
-                    //     y: 0,
-                    // },
-                    position: screenToFlowPosition({
-                        x: event.clientX + 200,
-                        y: event.clientY,
-                    }),
+                    position: newNodePosition,
                     type: "question",
                     data: {
                         question: faker.lorem.sentence(),
@@ -175,12 +174,9 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
 
                 setNodes((nds) => {
                     const updatedNodes = nds.concat(newNode);
-                    // @ts-ignore
-                    const sourceNode = updatedNodes.find(node => node.id === connecting.nodeId);
-                    if (sourceNode) {
-                        // @ts-ignore
-                        sourceNode.data.options = sourceNode.data.options.map(opt =>
-                            // @ts-ignore
+                    const updatedSourceNode = updatedNodes.find(node => node.id === connecting.nodeId);
+                    if (updatedSourceNode) {
+                        updatedSourceNode.data.options = updatedSourceNode.data.options.map(opt =>
                             opt.id === connecting.handleId ? { ...opt, nextNodeId: id } : opt
                         );
                     }
@@ -188,11 +184,8 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                 });
 
                 const newEdge: Edge = {
-                    // @ts-ignore
                     id: `e${connecting.handleId}-${id}`,
-                    // @ts-ignore
                     source: connecting.nodeId,
-                    // @ts-ignore
                     sourceHandle: connecting.handleId,
                     target: id,
                     animated: true,
@@ -201,10 +194,22 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
 
                 setEdges((eds) => eds.concat(newEdge));
 
-                // Center the view on the new node
-                setTimeout(() => {
-                    setCenter(newNodeX, 0, { zoom: getViewport().zoom, duration: 1000 });
-                }, 100);
+                // Check if the new node is in view
+                const { x, y, zoom } = getViewport();
+                const nodeIsInView = (
+                    newNodePosition.x >= x && newNodePosition.x <= x + window.innerWidth / zoom &&
+                    newNodePosition.y >= y && newNodePosition.y <= y + window.innerHeight / zoom
+                );
+
+                // Only adjust view if the new node is out of view
+                if (!nodeIsInView) {
+                    const padding = 50; // Adjust this value as needed
+                    setCenter(
+                        newNodePosition.x,
+                        newNodePosition.y,
+                        { zoom, duration: 500 }
+                    );
+                }
             }
             connectingNodeId.current = null;
         },
@@ -219,14 +224,14 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
             const lastNode = existingNodes[existingNodes.length - 1];
             const viewport = getViewport();
 
-            const newNodeX = lastNode ? lastNode.position.x + HORIZONTAL_SPACING : HORIZONTAL_SPACING;
+            const newNodeY = lastNode ? lastNode.position.y + VERTICAL_SPACING : 0;
 
             const newNode = {
                 id: newNodeId,
                 type: 'question',
                 position: {
-                    x: newNodeX,
-                    y: 0
+                    x: 0, // Keep x position constant
+                    y: newNodeY
                 },
                 data: {
                     question: 'New Question',
@@ -249,7 +254,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
 
             // Center the view on the new node
             setTimeout(() => {
-                setCenter(newNodeX, 0, { zoom: viewport.zoom, duration: 1000 });
+                setCenter(0, newNodeY, { zoom: viewport.zoom, duration: 1000 });
             }, 100);
 
             return updatedNodes;
@@ -264,14 +269,14 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
             const lastNode = existingNodes[existingNodes.length - 1];
             const viewport = getViewport();
 
-            const newNodeX = lastNode ? lastNode.position.x + HORIZONTAL_SPACING : HORIZONTAL_SPACING;
+            const newNodeY = lastNode ? lastNode.position.y + VERTICAL_SPACING : 0;
 
             const newNode = {
                 id: newNodeId,
                 type: "message",
                 position: {
-                    x: newNodeX,
-                    y: 0
+                    x: 0, // Center horizontally
+                    y: newNodeY
                 },
                 data: {
                     heading: "Thank you for registering",
@@ -281,10 +286,18 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
 
             const updatedNodes = [...nds, newNode];
 
-            // Center the view on the new node
-            setTimeout(() => {
-                setCenter(newNodeX, 0, { zoom: viewport.zoom, duration: 1000 });
-            }, 100);
+            // Check if the new node is in view
+            const { x, y, zoom } = viewport;
+            const nodeIsInView = (
+                newNode.position.y >= y && newNode.position.y <= y + window.innerHeight / zoom
+            );
+
+            // Only adjust view if the new node is out of view
+            if (!nodeIsInView) {
+                setTimeout(() => {
+                    setCenter(0, newNode.position.y, { zoom, duration: 500 });
+                }, 100);
+            }
 
             return updatedNodes;
         });
@@ -292,14 +305,11 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
         // Connect unconnected question node options to the new Final Node
         setEdges((eds) => {
             const nodes = getNodes();
-            // @ts-ignore
             const newEdges = [];
 
             nodes.forEach(node => {
                 if (node.type === 'question') {
-                    // @ts-ignore
                     node.data.options.forEach(option => {
-                        console.log(option)
                         // Check if this option doesn't have a next node or if its next node doesn't exist
                         const nextNodeExists = nodes.some(n => n.id === option.nextNodeId);
                         if (!option.nextNodeId || !nextNodeExists) {
@@ -319,7 +329,6 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                 }
             });
 
-            // @ts-ignore
             return [...eds, ...newEdges];
         });
 
