@@ -8,7 +8,6 @@ import {
     ConnectionLineType,
     Controls,
     Edge,
-    Node,
     Panel,
     ReactFlow,
     useEdgesState,
@@ -16,14 +15,13 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { UploadCloud } from "lucide-react";
+import { Code } from "lucide-react";
 import { nanoid } from 'nanoid';
-import { useRouter } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { createContext, useCallback, useRef, useState } from 'react';
 import MessageNode from './message-node';
 import QuestionNode from './question-node';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { useMutation } from '@tanstack/react-query';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 const nodeTypes = {
@@ -31,15 +29,14 @@ const nodeTypes = {
     message: MessageNode
 };
 
-const HORIZONTAL_SPACING = 375; // Adjust this value as needed
+const HORIZONTAL_SPACING = 375;
 
-export const ProjectFlow = ({ initialNodes, initialEdges }: { initialNodes: Node[], initialEdges: Edge[] }) => {
-    const [colorMode, setColorMode] = useState<ColorMode>('dark');
+export const ProjectFlow = ({ project }: { project: any }) => {
+    const [direction, setDirection] = useState<"TB" | "LR">("TB")
     const connectingNodeId = useRef(null);
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState(project.map.nodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(project.map.edges);
     const { screenToFlowPosition, setCenter, getNodes, getViewport } = useReactFlow();
-    const router = useRouter()
 
     // @ts-ignore
     const onConnect = useCallback((connection) => {
@@ -224,7 +221,7 @@ export const ProjectFlow = ({ initialNodes, initialEdges }: { initialNodes: Node
             return updatedNodes;
         });
 
-        // Connect unconnected question node options to the new final node
+        // Connect unconnected question node options to the new Final Node
         setEdges((eds) => {
             const nodes = getNodes();// @ts-ignore
             const newEdges = [];
@@ -255,66 +252,65 @@ export const ProjectFlow = ({ initialNodes, initialEdges }: { initialNodes: Node
 
     }, [setNodes, getNodes, setCenter, getViewport, setEdges]);
 
-    const handlePublish = async () => {
-        // const payload = {
-        //     name: "Test Project 1",
-        //     map: {
-        //         nodes, edges
-        //     }
-        // }
-        // const response = await fetch("/api/publish", {
-        //     method: "POST",
-        //     body: JSON.stringify(payload),
-        //     headers: {
-        //         "Content-Type": "application/json"
-        //     }
-        // })
-        // const data = await response.json()
-
-        // router.push(`/${data.id}`)
-    }
+    const mutation = useMutation({
+        mutationKey: undefined,
+        mutationFn: async () => {
+            const payload = {
+                map: {
+                    nodes, edges
+                }
+            }
+            await fetch(`/api/project/${project.id}`, {
+                method: "PUT",
+                body: JSON.stringify(payload),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            return true;
+        }
+    })
 
     return (
-        <ReactFlow
-            className="bg-background h-full w-full"
-            nodeTypes={nodeTypes}
-            nodes={nodes}
-            edges={edges}
-            colorMode={colorMode}
-            minZoom={0.1}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onConnectStart={onConnectStart}
-            onConnectEnd={onConnectEnd}
-            panOnScroll
-            fitView
-            snapToGrid
-            connectionLineType={ConnectionLineType.Bezier}
-            nodeOrigin={[0.5, 0.5]}
-        >
-            <Background className="opacity-50" />
-            <Controls />
-            <Panel className="space-x-2" position="top-left">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button>Add node</Button>
-                    </SheetTrigger>
-                    <SheetContent>
-
-                    </SheetContent>
-                </Sheet>
-            </Panel>
-            <Panel className="space-x-2" position="bottom-center">
-                <Button onClick={addNewQuestion}>Add node</Button>
-                <Button variant="ghost" onClick={addFinalNode}>Final node</Button>
-            </Panel>
-            <Panel position="top-right">
-                <Button onClick={handlePublish}>
-                    Publish
-                    <UploadCloud className="ml-2 h-3.5 w-3.5" />
-                </Button>
-            </Panel>
-        </ReactFlow>
+        <DirectionContext.Provider value={{ direction }}>
+            <ReactFlow
+                className="bg-muted/30 h-full w-full"
+                nodeTypes={nodeTypes}
+                nodes={nodes}
+                edges={edges}
+                minZoom={0.1}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
+                panOnScroll
+                snapToGrid
+                connectionLineType={ConnectionLineType.Bezier}
+                defaultViewport={{ x: 200, y: 200, zoom: 1 }}
+            >
+                <Background className="dark:opacity-50" />
+                <Controls />
+                <Panel className="space-x-2" position="top-left">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button>View Code</Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                        </SheetContent>
+                    </Sheet>
+                </Panel>
+                <Panel className="space-x-2" position="bottom-center">
+                    <Button onClick={addNewQuestion}>Add Node</Button>
+                    <Button variant="ghost" onClick={addFinalNode}>Final Node</Button>
+                </Panel>
+                <Panel className="space-x-2" position="top-right">
+                    <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>Save</Button>
+                </Panel>
+            </ReactFlow>
+        </DirectionContext.Provider>
     );
-};
+}
+
+
+const DirectionContext = createContext<{ direction: "TB" | "LR" }>(null)

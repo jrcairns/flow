@@ -10,8 +10,8 @@ export default async function Project({ params }: { params: { projectId: string 
 
     if (!project) return notFound()
 
-    return <div className="border rounded-md shadow-inner h-full">
+    return <div className="border rounded-md shadow-inner h-full overflow-hidden">
         {/* @ts-ignore */}
-        <ProjectFlow initialEdges={project.map.edges} initialNodes={project.map.nodes} />
+        <ProjectFlow project={project} />
     </div>
 }

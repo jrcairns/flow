@@ -7,8 +7,11 @@ import { buttonVariants } from "./ui/button";
 import { CircuitBoard } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Label } from "./ui/label";
+import { useParams } from "next/navigation";
 
 export function Sidebar() {
+    const params = useParams<{ projectId: string }>()
+
     const { data } = useQuery({
         queryKey: ['projects'],
         queryFn: async () => {
@@ -24,16 +27,25 @@ export function Sidebar() {
                 <Label className="text-xs">Recent projects</Label>
                 <ul className="space-y-1">
                     {/* @ts-ignore */}
-                    {data?.map(project => (
-                        <li className="flex w-full" key={project.id}>
-                            <Link className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-auto py-2 w-full items-center justify-start")} href={`/${project.id}`}>
-                                <CircuitBoard className="mr-2 h-3 w-3" />
-                                <span className="flex-1 line-clamp-1">
-                                    {project.name}
-                                </span>
-                            </Link>
-                        </li>
-                    ))}
+                    {data?.map(project => {
+                        const isActive = project.id === params.projectId
+                        return (
+                            <li className="flex w-full" key={project.id}>
+                                <Link
+                                    href={`/${project.id}`}
+                                    className={cn(
+                                        buttonVariants({ variant: "ghost", size: "sm" }),
+                                        { "bg-accent/80 text-foreground dark:bg-transparent": isActive },
+                                        "h-auto py-2 w-full items-center justify-start"
+                                    )}>
+                                    <CircuitBoard className="mr-2 h-3 w-3" />
+                                    <span className="flex-1 line-clamp-1">
+                                        {project.name}
+                                    </span>
+                                </Link>
+                            </li>
+                        )
+                    })}
                 </ul>
             </div>
         </div>

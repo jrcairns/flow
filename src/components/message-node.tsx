@@ -29,9 +29,9 @@ function MessageNode({ data }) {
                     <Button className="p-4 pl-6 relative !text-base items-start flex-col h-auto group min-w-[20rem] max-w-xs w-full !whitespace-normal text-left">
                         <Handle
                             type="target"
-                            position={Position.Left}
+                            position={Position.Top}
                             id={`${nodeId}`}
-                            className="w-4 h-3/5 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
+                            className="w-3/5 h-4 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
                         />
 
                         <span className="text-base line-clamp-2">{data.heading}</span>

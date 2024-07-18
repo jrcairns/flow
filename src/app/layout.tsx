@@ -2,11 +2,12 @@
 import {
   ClerkProvider
 } from '@clerk/nextjs'
-import { dark } from '@clerk/themes';
+import { dark, neobrutalism } from '@clerk/themes';
 
 import { ReactFlowProvider } from '@xyflow/react'
 import './globals.css'
 import { QueryProvider } from '@/components/query-provider'
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function RootLayout({
   children,
@@ -14,19 +15,24 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: dark
-      }}>
-      <html lang="en">
-        <body>
+    <html lang="en">
+      <body className="[--xy-edge-stroke-default:theme(colors.muted)]">
+        <ClerkProvider
+          appearance={{
+            baseTheme: dark,
+            variables: {
+              colorBackground: "hsl(20,14.3%,4.1%)"
+            }
+          }}>
           <QueryProvider>
-            <ReactFlowProvider>
-              {children}
-            </ReactFlowProvider>
+            <ThemeProvider>
+              <ReactFlowProvider>
+                {children}
+              </ReactFlowProvider>
+            </ThemeProvider>
           </QueryProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }

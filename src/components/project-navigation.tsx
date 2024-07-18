@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "./ui/skeleton";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 
 export function ProjectNavigation() {
     const { projectId } = useParams()
@@ -26,7 +27,7 @@ export function ProjectNavigation() {
 
     if (isLoading) return (
         <div className="p-4 flex items-center">
-            <span>Flowcala</span>
+            <span className="tracking-tight">flowcala</span>
         </div>
     )
 
@@ -35,7 +36,7 @@ export function ProjectNavigation() {
     return (
         <nav className="w-full p-4 justify-between flex items-center">
             <div className="flex space-x-6">
-                <span>Flowcala</span>
+                <Link href="/" className="tracking-tight">flowcala</Link>
                 <Dialog>
                     <DialogTrigger className="flex items-center max-w-[28ch] space-x-2 transition-colors text-muted-foreground hover:text-foreground">
                         <CircuitBoard className="h-3.5 w-3.5" />
@@ -47,14 +48,7 @@ export function ProjectNavigation() {
                     </DialogContent>
                 </Dialog>
             </div>
-            <UserButton
-                appearance={{
-                    elements: {
-                        userButtonPopoverCard: "!rounded-md !overflow-hidden bg-background",
-                        userButtonPopoverMain: "bg-muted/20",
-                        userButtonPopoverFooter: "bg-gradient-to-t from-background to-background"
-                    }
-                }} />
+            <UserButton />
         </nav>
     )
 }
@@ -71,7 +65,6 @@ function ManageProjectForm({ project }: { project: any }) {
     const mutation = useMutation({
         mutationKey: undefined,
         mutationFn: async (values) => {
-            console.log(values)
             const response = await fetch(`/api/project/${project.id}`, {
                 method: "PUT",
                 body: JSON.stringify(values)

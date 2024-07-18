@@ -10,11 +10,14 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { nanoid } from 'nanoid';
 import { cn } from '@/lib/utils';
+import { useDirection } from './flow';
 
 // @ts-ignore
 function QuestionNode({ data }) {
+    const direction = "TR"
+    // const { direction } = useDirection()
     const nodeId = useNodeId();
-    const { setNodes, getEdges } = useReactFlow();
+    const { setNodes } = useReactFlow();
     const [localData, setLocalData] = useState(data);
 
     const edges = useStore((store) => store.edges);
@@ -36,25 +39,29 @@ function QuestionNode({ data }) {
             </div>
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button className="p-4 pl-6 relative !text-base items-start flex-col h-auto group min-w-[20rem] max-w-xs w-full !whitespace-normal text-left">
+                    <Button className="p-4 pl-6 relative !text-base items-start flex-col h-auto group w-[320px] !whitespace-normal text-left">
                         <Handle
                             type="target"
-                            position={Position.Left}
+                            position={direction === "LR" ? Position.Left : Position.Top}
                             id={`${nodeId}`}
-                            className="w-4 h-3/5 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
+                            className="w-3/5 h-4 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
                         />
-                        <div className="absolute right-0 inset-y-0 grid items-center">
+                        <div className="absolute px-2 translate-y-1/2 bottom-0 inset-x-0 grid gap-2 items-center" style={{ gridTemplateColumns: `repeat(${localData?.options?.length}, minmax(0, 1fr))` }}>
                             {/* @ts-ignore */}
                             {localData?.options?.map((option, index) => (
                                 <Handle
                                     key={option.id}
                                     type="source"
-                                    position={Position.Right}
+                                    position={Position.Bottom}
+                                    onClick={(event) => {
+                                        event.stopPropagation()
+                                        alert('hit')
+                                    }}
                                     id={option.id}
                                     style={{ position: "unset" }}
                                     className={cn(
-                                        "rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal",
-                                        connectedOptionIds.has(option.id) ? "bg-green-500" : "bg-yellow-500"
+                                        "rounded-md h-3 w-full translate-x-0 border-border transition-colors mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
+                                        connectedOptionIds.has(option.id) ? "bg-green-500 dark:bg-green-700" : "bg-yellow-500 dark:bg-yellow-700"
                                     )}
                                 />
                             ))}
