@@ -83,7 +83,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
         initialEdges,
     );
 
-    const [direction, setDirection] = useState<"TB" | "LR">("TB")
+    const [direction, setDirection] = useState<"TB" | "LR">("LR")
 
     const connectingNodeId = useRef(null);
     const nameRef = useRef<HTMLInputElement | null>(null)
@@ -398,10 +398,10 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                         setDirection(value as "TB" | "LR")
                     }}>
                         <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent p-0">
-                            <TabsTrigger className="h-9 w-9" value="TB">
+                            <TabsTrigger className="h-9 w-9" value="LR">
                                 <FoldHorizontal className="w-3.5 h-3.5" />
                             </TabsTrigger>
-                            <TabsTrigger className="h-9 w-9" value="LR">
+                            <TabsTrigger disabled className="h-9 w-9" value="TB">
                                 <FoldVertical className="w-3.5 h-3.5" />
                             </TabsTrigger>
                         </TabsList>
