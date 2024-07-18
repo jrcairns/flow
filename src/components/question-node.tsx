@@ -44,12 +44,12 @@ function QuestionNode({ data }) {
 
     return (
         <div>
-            <div className="font-mono mb-4 text-xs">
+            <div className="font-mono mb-4 text-xs text-muted-foreground peer-hover:text-foreground">
                 {`${nodeId!.padStart(2, '0')}.`}
             </div>
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button className="p-4 pl-6 relative !text-base items-start flex-col h-auto group w-[320px] !whitespace-normal text-left">
+                    <Button className="peer p-4 pl-6 relative !text-base items-start flex-col h-auto group w-[320px] !whitespace-normal text-left">
                         <Handle
                             type="target"
                             position={Position.Top}

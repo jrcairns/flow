@@ -1,6 +1,7 @@
 import { ProjectNavigation } from "@/components/project-navigation";
 import { Sidebar } from "@/components/sidebar";
 import { PropsWithChildren, Suspense } from "react";
+import { Toaster } from "sonner";
 
 export default function ProjectLayout({ children }: PropsWithChildren) {
     return (
@@ -13,6 +14,13 @@ export default function ProjectLayout({ children }: PropsWithChildren) {
             </div>
             <div className="flex-1 mr-4 mb-4 mt-[--nav-height] ml-[--sidebar-width]">
                 {children}
+                <Toaster
+                    toastOptions={{
+                        classNames: {
+                            toast: 'max-w-xs bg-background border-border text-foreground right-0',
+                        },
+                    }}
+                />
             </div>
         </div>
     )

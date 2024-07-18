@@ -20,14 +20,18 @@ import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { FoldHorizontal, FoldVertical, Loader2, UploadCloud, WandSparkles } from "lucide-react";
 import { nanoid } from 'nanoid';
-import { useRouter } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import MessageNode from './message-node';
 import QuestionNode from './question-node';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Popover, PopoverContent } from './ui/popover';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { SignIn, useUser } from '@clerk/nextjs';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -78,18 +82,22 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 };
 
 export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], initialEdges: Edge[] }) => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        initialNodes,
-        initialEdges,
-    );
+    const { isSignedIn } = useUser()
+
+    const params = useSearchParams()
+
+    // const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+    //     initialNodes,
+    //     initialEdges,
+    // );
 
     const [direction, setDirection] = useState<"TB" | "LR">("LR")
 
     const connectingNodeId = useRef(null);
     const nameRef = useRef<HTMLInputElement | null>(null)
 
-    const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const { screenToFlowPosition, setCenter, getNodes, getViewport } = useReactFlow();
 
@@ -352,7 +360,9 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     "Content-Type": "application/json"
                 }
             })
+
             const data = await response.json()
+
             return data
         },
         onSuccess(data) {
@@ -371,10 +381,19 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
         [nodes, edges],
     );
 
+    const handleLocalPublish = () => {
+        localStorage.setItem("flowcala", JSON.stringify({
+            nodes,
+            edges
+        }))
+
+        router.push("/?dialog=auth")
+    }
+
     return (
         <DirectionContext.Provider value={{ direction }}>
             <ReactFlow
-                className="bg-background h-full w-full"
+                className="bg-background h-full w-full relative"
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
@@ -390,7 +409,9 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                 connectionLineType={ConnectionLineType.Bezier}
                 nodeOrigin={[0.5, 0.5]}
             >
-                <Background className="dark:opacity-50" />
+                <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'>
+                    <Background className="dark:opacity-70" />
+                </div>
                 <Controls />
                 <Panel position="top-left">
                     <Tabs value={direction} onValueChange={value => {
@@ -421,33 +442,61 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                     <Button variant="ghost" onClick={addFinalNode}>Final Node</Button>
                 </Panel>
                 <Panel position="top-right">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button className="min-w-[90px]" disabled={mutation.isPending}>
-                                {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (
-                                    <>
-                                        Publish
-                                        <UploadCloud className="ml-2 h-3.5 w-3.5" />
-                                    </>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="end">
-                            <form onSubmit={event => {
-                                event.preventDefault()
-                                mutation.mutate()
-                            }} className="space-y-4">
-                                <div className="flex flex-col space-y-1.5">
-                                    <Input disabled={mutation.isPending} ref={nameRef} placeholder="website.com" />
-                                </div>
-                                <PopoverClose asChild>
-                                    <Button disabled={mutation.isPending} type="submit" variant="link" className="h-auto w-full">Create project</Button>
-                                </PopoverClose>
-                            </form>
-                        </PopoverContent>
-                    </Popover>
+                    {isSignedIn ? (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button className="min-w-[90px]" disabled={mutation.isPending}>
+                                    {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (
+                                        <>
+                                            Publish
+                                            <UploadCloud className="ml-2 h-3.5 w-3.5" />
+                                        </>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end">
+                                <form onSubmit={event => {
+                                    event.preventDefault()
+                                    mutation.mutate()
+                                }} className="space-y-4">
+                                    <div className="flex flex-col space-y-1.5">
+                                        <Input disabled={mutation.isPending} ref={nameRef} placeholder="website.com" />
+                                    </div>
+                                    <PopoverClose asChild>
+                                        <Button disabled={mutation.isPending} type="submit" variant="link" className="h-auto w-full">Create project</Button>
+                                    </PopoverClose>
+                                </form>
+                            </PopoverContent>
+                        </Popover>
+                    ) : (
+                        <Button onClick={handleLocalPublish}>
+                            Publish <UploadCloud className="ml-2 h-3.5 w-3.5" />
+                        </Button>
+                    )}
                 </Panel>
-            </ReactFlow >
+            </ReactFlow>
+            <Dialog
+                open={params.get("dialog") === "auth"}
+                onOpenChange={(value) => {
+                    if (!value) {
+                        // Create a new URLSearchParams object
+                        const newSearchParams = new URLSearchParams(params);
+                        // Remove the "dialog" parameter
+                        newSearchParams.delete("dialog");
+                        // Construct the new URL
+                        const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
+                        // Use router.push to update the URL without the dialog parameter
+                        router.push(newPathname);
+                    }
+                }}
+            >
+                <DialogContent className="max-w-none w-auto border-none p-0">
+                    <div className="sr-only">
+                        <DialogTitle>Login form</DialogTitle>
+                    </div>
+                    <SignIn />
+                </DialogContent>
+            </Dialog>
         </DirectionContext.Provider>
     );
 };

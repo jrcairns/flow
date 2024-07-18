@@ -23,6 +23,7 @@ import QuestionNode from './question-node';
 import { Button } from './ui/button';
 import { useMutation } from '@tanstack/react-query';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { toast } from 'sonner';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -255,20 +256,25 @@ export const ProjectFlow = ({ project }: { project: any }) => {
     const mutation = useMutation({
         mutationKey: undefined,
         mutationFn: async () => {
-            const payload = {
-                map: {
-                    nodes, edges
+            toast.promise(() => {
+                const payload = {
+                    map: {
+                        nodes, edges
+                    }
                 }
-            }
-            await fetch(`/api/project/${project.id}`, {
-                method: "PUT",
-                body: JSON.stringify(payload),
-                headers: {
-                    "Content-Type": "application/json"
-                }
+                return fetch(`/api/project/${project.id}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+            }, {
+                loading: 'Saving changes',
+                success: 'Saved',
+                error: 'Failed to save',
             })
-            return true;
-        }
+        },
     })
 
     return (
