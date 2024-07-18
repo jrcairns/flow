@@ -32,7 +32,7 @@ export function Sidebar() {
                         return (
                             <li className="flex w-full" key={project.id}>
                                 <Link
-                                    href={`/${project.id}`}
+                                    href={`/p/${project.id}`}
                                     className={cn(
                                         buttonVariants({ variant: "ghost", size: "sm" }),
                                         { "bg-accent/80 text-foreground dark:bg-transparent": isActive },
