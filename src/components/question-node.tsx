@@ -65,7 +65,7 @@ function QuestionNode({ data }) {
                                     id={option.id}
                                     style={{ position: "unset" }}
                                     className={cn(
-                                        "rounded-md h-3 w-full translate-x-0 border-border transition-colors mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
+                                        "rounded-md h-3 w-full max-w-3/5 translate-x-0 border-border transition-colors mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
                                         connectedOptionIds.has(option.id) ? "bg-green-500 dark:bg-green-700" : "bg-yellow-500 dark:bg-yellow-700"
                                     )}
                                 />

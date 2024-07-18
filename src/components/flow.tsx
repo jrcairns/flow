@@ -430,7 +430,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         </TabsList>
                     </Tabs>
                 </Panel>
-                <Panel className="max-w-md w-full mt-5" position="top-center">
+                <Panel className="hidden lg:block max-w-md w-full mt-5" position="top-center">
                     <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
                         <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
                         <Button disabled>
