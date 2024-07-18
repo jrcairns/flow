@@ -82,7 +82,7 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     return { nodes: newNodes, edges };
 };
 
-export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], initialEdges: Edge[] }) => {
+export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: Node[], initialEdges: Edge[], className?: string }) => {
     const { isSignedIn } = useUser()
 
     const params = useSearchParams()
@@ -394,7 +394,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
     return (
         <DirectionContext.Provider value={{ direction }}>
             <ReactFlow
-                className="bg-background h-full w-full relative"
+                className={cn("bg-background h-full w-full relative", className)}
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
@@ -430,7 +430,7 @@ export const Flow = ({ initialNodes, initialEdges }: { initialNodes: Node[], ini
                         </TabsList>
                     </Tabs>
                 </Panel>
-                <Panel className="max-w-md w-full" position="top-center">
+                <Panel className="max-w-md w-full mt-5" position="top-center">
                     <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
                         <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
                         <Button disabled>
