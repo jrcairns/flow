@@ -42,7 +42,7 @@ function QuestionNode({ data }) {
                     <Button className="p-4 pl-6 relative !text-base items-start flex-col h-auto group w-[320px] !whitespace-normal text-left">
                         <Handle
                             type="target"
-                            position={direction === "LR" ? Position.Left : Position.Top}
+                            position={Position.Top}
                             id={`${nodeId}`}
                             className="w-3/5 h-4 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
                         />
