@@ -18,7 +18,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { ChevronUp, FoldHorizontal, FoldVertical, Loader2, UploadCloud, WandSparkles } from "lucide-react";
+import { ArrowRight, ArrowRightToLine, ChevronUp, FoldHorizontal, FoldVertical, Info, Loader2, UploadCloud, WandSparkles } from "lucide-react";
 import { nanoid } from 'nanoid';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -34,6 +34,9 @@ import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/nextjs'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import Link from 'next/link';
+import { Sidebar } from './sidebar';
+import { Badge } from './ui/badge';
+import { Label } from './ui/label';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -411,27 +414,26 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                 snapToGrid
                 connectionLineType={ConnectionLineType.Bezier}
                 nodeOrigin={[0.5, 0.5]}
+                proOptions={{
+                    hideAttribution: true
+                }}
             >
                 <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'>
                     <Background className="dark:opacity-70" />
                 </div>
-                <Controls />
+                {/* <Controls /> */}
                 <SignedIn>
                     <Panel position="top-left">
-                        {/* <Tabs value={direction} onValueChange={value => {
-                        onLayout(value)
-                        setDirection(value as "TB" | "LR")
-                    }}>
-                        <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent p-0">
-                            <TabsTrigger className="h-9 w-9" value="LR">
-                                <FoldHorizontal className="w-3.5 h-3.5" />
-                            </TabsTrigger>
-                            <TabsTrigger disabled className="h-9 w-9" value="TB">
-                                <FoldVertical className="w-3.5 h-3.5" />
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs> */}
-                        <UserButton />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="icon">
+                                    <ArrowRightToLine className="w-3.5 h-3.5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-64 origin-top-left p-0" side="right" sideOffset={-36} align="start">
+                                <Sidebar />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </Panel>
                 </SignedIn>
                 <SignedOut>
@@ -439,15 +441,23 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         <Link href="/?dialog=auth" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>Log in</Link>
                     </Panel>
                 </SignedOut>
+
+                <SignedIn>
+                    <Panel className="flex" position="bottom-left">
+                        <UserButton />
+                    </Panel>
+                </SignedIn>
+
                 <Panel className="hidden lg:block max-w-md w-full mt-5" position="top-center">
                     <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
                         <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
                         <Button disabled>
                             Generate ✨
                         </Button>
-                        <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-muted/30 backdrop-blur-sm border text-[11px] px-1 text-muted-foreground/50 rounded-md">Coming soon 🎉</div>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-muted/50 backdrop-blur-sm border text-[11px] px-1 text-muted-foreground/50 rounded-md">Coming soon 🎉</div>
                     </div>
                 </Panel>
+
                 <Panel className="space-x-2" position="bottom-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -462,7 +472,6 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    {/* <Button variant="ghost" onClick={addFinalNode}>Final Node</Button> */}
                 </Panel>
                 <Panel position="top-right">
                     {isSignedIn ? (
@@ -477,7 +486,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                     )}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent align="end">
+                            <PopoverContent className="origin-top-right" align="end">
                                 <form onSubmit={event => {
                                     event.preventDefault()
                                     mutation.mutate()
@@ -497,18 +506,47 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         </Button>
                     )}
                 </Panel>
+
+                <Panel position="bottom-right">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button size="icon">
+                                <Info className="w-3.5 h-3.5" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="origin-bottom-right space-y-2 text-sm p-0 border-none" align="end" side="top" sideOffset={-36}>
+                            <div className="rounded-md border p-4 bg-muted/10 relative">
+                                <span className="absolute right-2 top-0 bg-[#151211] text-[11px] rounded-md border px-2 py-1 block leading-none -translate-y-1/2 text-muted-foreground">Legend</span>
+                                <div className="flex flex-col space-y-4">
+                                    <div className="flex flex-col space-y-2.5">
+                                        <Label className="text-muted-foreground">Question</Label>
+                                        <div className="bg-background border rounded-md px-6 py-4 w-full relative">
+                                            <div className="bg-background absolute w-3/5 h-4 border rounded-md top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                                            <Badge className="rounded-full mb-1.5 !text-xs">2 answers</Badge>
+                                            <span className="text-muted-foreground line-clamp-2 min-h-[2lh]">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid non quis nobis quibusdam magnam voluptatem.</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2.5 flex flex-col">
+                                        <Label className="text-muted-foreground">Connected answer</Label>
+                                        <div className="rounded-md h-3 w-full max-w-3/5 bg-green-500 dark:bg-green-700"></div>
+                                    </div>
+                                    <div className="space-y-2.5 flex flex-col">
+                                        <Label className="text-muted-foreground">Disconnected answer</Label>
+                                        <div className="rounded-md h-3 w-full max-w-3/5 bg-yellow-500 dark:bg-yellow-700"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </Panel>
             </ReactFlow>
             <Dialog
                 open={params.get("dialog") === "auth"}
                 onOpenChange={(value) => {
                     if (!value) {
-                        // Create a new URLSearchParams object
                         const newSearchParams = new URLSearchParams(params);
-                        // Remove the "dialog" parameter
                         newSearchParams.delete("dialog");
-                        // Construct the new URL
                         const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-                        // Use router.push to update the URL without the dialog parameter
                         router.push(newPathname);
                     }
                 }}

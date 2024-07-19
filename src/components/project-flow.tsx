@@ -280,7 +280,7 @@ export const ProjectFlow = ({ project }: { project: any }) => {
     return (
         <DirectionContext.Provider value={{ direction }}>
             <ReactFlow
-                className="bg-muted/30 h-full w-full"
+                className="bg-muted/10 h-full w-full"
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}

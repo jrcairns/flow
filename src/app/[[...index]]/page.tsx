@@ -51,7 +51,7 @@ export default function Home() {
   if (!isLoaded) return null
 
   return (
-    <div className="bg-muted/30 sm:p-4 h-svh">
+    <div className="bg-muted/10 sm:p-4 h-svh">
       <Flow className="sm:border sm:rounded-md" initialNodes={data.nodes} initialEdges={data.edges} />
     </div>
   );
