@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Textarea } from './ui/textarea';
 import { useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 // @ts-ignore
 function MessageNode({ data }) {

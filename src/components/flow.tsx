@@ -620,9 +620,11 @@ function Preview({ nodes, edges }: { nodes: Node[], edges: Edge[] }) {
     return (
         <form onSubmit={handleSubmit} className={cn("max-w-md space-y-6 p-8 transition duration-200 opacity-0 @lg:opacity-100 flex-shrink-0 w-full")}>
             <div className="space-y-2">
+                {/* @ts-ignore */}
                 <p className="text-balance text-sm font-medium whitespace-nowrap text-muted-foreground">{node?.data.question}</p>
             </div>
             <RadioGroup value={state} onValueChange={setState} name={node?.id} defaultValue={node?.data.options[0].id}>
+                {/* @ts-ignore */}
                 {node?.data.options?.filter(option => !!option.nextNodeId)?.map(option => (
                     <div key={option.id} className="flex items-center space-x-2">
                         <RadioGroupItem value={option.nextNodeId} id={option.id} />
