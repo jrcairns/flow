@@ -25,31 +25,18 @@ export function ProjectNavigation() {
         }
     })
 
-    if (isLoading) return (
-        <div className="p-4 flex items-center">
-            <span className="tracking-tight">flowcala</span>
-        </div>
-    )
-
-    if (!data) return <div>not found</div>
-
     return (
-        <nav className="w-full p-4 justify-between flex items-center">
-            <div className="flex space-x-6">
-                <Link href="/" className="tracking-tight">flowcala</Link>
-                <Dialog>
-                    <DialogTrigger className="flex items-center max-w-[28ch] space-x-2 transition-colors text-muted-foreground hover:text-foreground">
-                        <CircuitBoard className="h-3.5 w-3.5" />
-                        {isLoading ? <Skeleton className="w-24 bg-muted-foreground h-4 flex-1" /> : <span className="truncate flex-1">{data?.name}</span>}
-                        <ChevronDown className="h-3.5 w-3.5" />
-                    </DialogTrigger>
-                    <DialogContent>
-                        <ManageProjectForm project={data} />
-                    </DialogContent>
-                </Dialog>
-            </div>
-            <UserButton />
-        </nav>
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button className="max-w-[18ch] space-x-2">
+                    {isLoading ? <Skeleton className="w-24 bg-muted-foreground h-4 flex-1" /> : <span className="truncate flex-1">{data?.name}</span>}
+                    <CircuitBoard className="h-3.5 w-3.5" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <ManageProjectForm project={data} />
+            </DialogContent>
+        </Dialog>
     )
 }
 

@@ -1,8 +1,7 @@
-
 import {
   ClerkProvider
 } from '@clerk/nextjs'
-import { dark, neobrutalism } from '@clerk/themes';
+import { dark } from '@clerk/themes';
 
 import { ReactFlowProvider } from '@xyflow/react'
 import './globals.css'

@@ -6,10 +6,16 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Textarea } from './ui/textarea';
+import { useSearchParams } from 'next/navigation';
 
 // @ts-ignore
 function MessageNode({ data }) {
     const nodeId = useNodeId();
+
+    const params = useSearchParams()
+    const isPreviewMode = params.get("dialog") === "preview"
+    const isPreviewNodeSelected = params.get("node") == nodeId
+
     const { setNodes, getEdges } = useReactFlow();
     const [localData, setLocalData] = useState(data);
 
@@ -20,7 +26,7 @@ function MessageNode({ data }) {
     };
 
     return (
-        <div>
+        <div className={cn("transition-opacity duration-500", isPreviewMode && !isPreviewNodeSelected ? "opacity-20" : "opacity-100")}>
             <div className="font-mono mb-4 text-xs">
                 {`${nodeId!.padStart(2, '0')}.`}
             </div>

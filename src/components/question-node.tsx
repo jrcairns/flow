@@ -10,9 +10,15 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Textarea } from './ui/textarea';
+import { useSearchParams } from 'next/navigation';
 
 function QuestionNode({ data }) {
     const nodeId = useNodeId();
+
+    const params = useSearchParams()
+    const isPreviewMode = params.get("dialog") === "preview"
+    const isPreviewNodeSelected = params.get("node") == nodeId
+
     const { setNodes } = useReactFlow();
     const updateNodeInternals = useUpdateNodeInternals();
     const [localData, setLocalData] = useState(data);
@@ -43,7 +49,7 @@ function QuestionNode({ data }) {
     }, [localData.options, nodeId, updateNodeInternals]);
 
     return (
-        <div>
+        <div className={cn("transition-opacity duration-500", isPreviewMode && !isPreviewNodeSelected ? "opacity-20" : "opacity-100")}>
             <div className="font-mono mb-4 text-xs text-muted-foreground peer-hover:text-foreground">
                 {`${nodeId!.padStart(2, '0')}.`}
             </div>

@@ -8,12 +8,12 @@ import { useEffect, useState } from 'react';
 
 const initialNodes = [
   {
-    id: nanoid(),
+    id: `question_${nanoid()}`,
     type: "question",
     data: {
       question: faker.lorem.sentences(),
       options: Array.from({ length: faker.number.int({ min: 1, max: 6 }) }).map(() => ({
-        id: nanoid(),
+        id: `answer_${nanoid()}`,
         text: faker.lorem.words({ min: 1, max: 5 }),
         nextNodeId: null
       }))

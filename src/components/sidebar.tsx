@@ -24,7 +24,10 @@ export function Sidebar() {
         }
     })
     return (
-        <div className="py-4 bg-muted/10">
+        <div className="bg-muted/10 pb-4">
+            <div className="px-4 mb-4 border-b py-2">
+                <span className="tracking-tight block">flowcala</span>
+            </div>
             <div className="flex flex-col space-y-2 px-2">
                 <Label className="text-xs px-3">Recent projects</Label>
                 {isLoading ? (
