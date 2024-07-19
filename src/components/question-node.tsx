@@ -37,7 +37,7 @@ function QuestionNode({ data }) {
     }, [nodeId, localData, setNodes, updateNodeInternals]);
 
     const addNewOption = useCallback(() => {
-        const newOption = { id: nanoid(), text: '', nextNodeId: null };
+        const newOption = { id: `answer_${nanoid()}`, text: '', nextNodeId: null };
         setLocalData(prevState => ({
             ...prevState,
             options: [...prevState.options, newOption]

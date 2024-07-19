@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/nextjs';
 import { faker } from '@faker-js/faker';
+import { DoubleArrowRightIcon } from '@radix-ui/react-icons';
 import { PopoverClose, PopoverTrigger } from '@radix-ui/react-popover';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -18,13 +19,14 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
-import { ArrowLeftToLine, ArrowRightToLine, ChevronUp, Info, Loader2, Menu, UploadCloud, X } from "lucide-react";
+import { ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud } from "lucide-react";
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MessageNode from './message-node';
+import { Project } from './project';
+import { ProjectNavigation } from './project-navigation';
 import QuestionNode from './question-node';
 import { Sidebar } from './sidebar';
 import { Badge } from './ui/badge';
@@ -34,10 +36,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Popover, PopoverContent } from './ui/popover';
-import { ProjectNavigation } from './project-navigation';
-import { Project } from './project';
-import { DoubleArrowLeftIcon, DoubleArrowRightIcon } from '@radix-ui/react-icons';
-import { Card, CardHeader, CardTitle } from './ui/card';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 const nodeTypes = {
@@ -376,10 +374,10 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             <Button onClick={() => {
                                 const newSearchParams = new URLSearchParams(params);
                                 newSearchParams.delete("dialog");
-                                newSearchParams.delete("node");
+                                // newSearchParams.delete("node");
                                 const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
                                 router.push(newPathname);
-                                setTimeout(centerOnFirstNode, 500)
+                                setTimeout(centerOnFirstNode, 600)
                             }} size="icon">
                                 <DoubleArrowRightIcon className="w-3.5 h-3.5" />
                             </Button>
@@ -465,7 +463,19 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             </DropdownMenu>
                         </Panel>
                         <Panel className="space-x-2" position="top-right">
-                            <Link onClick={() => setTimeout(centerOnFirstNode, 500)} className={cn(buttonVariants({ size: "sm", variant: "default" }))} href={{ query: { dialog: "preview", node: getNodes()?.[0]?.id } }}>Preview</Link>
+                            <Button
+                                disabled={params.get("dialog") === "preview"}
+                                onClick={() => {
+                                    const newSearchParams = new URLSearchParams(params);
+                                    newSearchParams.set("dialog", "preview")
+                                    newSearchParams.set("node", getNodes()?.[0]?.id)
+                                    const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
+                                    router.push(newPathname);
+                                    setTimeout(centerOnFirstNode, 600)
+                                }}
+                            >
+                                Preview
+                            </Button>
                             {isSignedIn ? (
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -555,101 +565,112 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                     <SignIn />
                 </DialogContent>
             </Dialog>
-
-            {/* <Dialog
-                open={params.get("dialog") === "preview"}
-                onOpenChange={(value) => {
-                    if (!value) {
-                        const newSearchParams = new URLSearchParams(params);
-                        newSearchParams.delete("dialog");
-                        const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-                        router.push(newPathname);
-                    }
-                }}
-            >
-                <DialogContent className="w-[calc(100svw-theme(spacing.4)*2)] h-[calc(100svh-theme(spacing.4)*2)] max-w-none">
-                    <div className="sr-only">
-                        <DialogTitle>Preview</DialogTitle>
-                    </div>
-                    <p>test</p>
-                </DialogContent>
-            </Dialog> */}
         </React.Fragment>
     );
 };
 
-function Preview({ nodes, edges }: { nodes: Node[], edges: Edge[] }) {
-    const params = useSearchParams()
-    const router = useRouter()
-    const currentNode = params.get("node")
+interface PreviewProps {
+    nodes: Node[];
+    edges: Edge[];
+}
 
-    const [store, setStore] = useState(new Map())
-    const [state, setState] = useState<string | undefined>(undefined)
+export function Preview({ nodes, edges }: PreviewProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const node = nodes.find(x => x.id === currentNode)
+    const questionNodes = useMemo(() => nodes.filter(node => node.type === 'question'), [nodes]);
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault()
-        const formData = new FormData(event.currentTarget)
-        const data = Object.fromEntries(formData)
+    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [currentNodeIndex, setCurrentNodeIndex] = useState(() => {
+        const nodeParam = searchParams.get('node');
+        return nodeParam ? questionNodes.findIndex(node => node.id === nodeParam) : 0;
+    });
+    const [path, setPath] = useState<string[]>(() => {
+        const nodeParam = searchParams.get('node');
+        return nodeParam ? [nodeParam] : (questionNodes.length > 0 ? [questionNodes[0].id] : []);
+    });
 
-        store.set(Object.values(data)[0], Object.keys(data)[0])
+    const currentNode = questionNodes[currentNodeIndex];
 
-        const newSearchParams = new URLSearchParams(params);
-        newSearchParams.set("node", Object.values(data)[0] as string)
+    const updateURL = (nodeId: string) => {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.set("node", nodeId);
         const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
         router.push(newPathname);
-    }
+    };
 
-    function handlePrevious() {
-        const currentNodeId = params.get("node");
-        if (!currentNodeId) return; // If there's no current node, we can't go back
+    const handleAnswerChange = (nodeId: string, optionId: string) => {
+        setAnswers(prev => ({ ...prev, [nodeId]: optionId }));
 
-        const newSearchParams = new URLSearchParams(params);
-        newSearchParams.set("node", store.get(currentNodeId));
-        const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-        router.push(newPathname);
+        // @ts-ignore
+        const currentOption = currentNode.data.options.find(opt => opt.id === optionId);
+        if (currentOption && currentOption.nextNodeId) {
+            const nextNodeIndex = questionNodes.findIndex(node => node.id === currentOption.nextNodeId);
+            if (nextNodeIndex !== -1) {
+                setPath(prev => [...prev.slice(0, currentNodeIndex + 1), currentOption.nextNodeId]);
+            }
+        }
+    };
 
-        // if (currentIndex > 0) {
-        //     // If we're not at the first entry, we can go back
-        //     const previousEntry = entries[currentIndex - 1];
-        //     const previousNodeId = previousEntry[0]; // Use the key, which is now the node ID
+    const handleNext = () => {
+        if (currentNodeIndex < path.length - 1) {
+            const nextIndex = currentNodeIndex + 1;
+            setCurrentNodeIndex(nextIndex);
+            updateURL(path[nextIndex]);
+        } else if (answers[currentNode.id] && currentNodeIndex < questionNodes.length - 1) {
+            // @ts-ignore
+            const currentOption = currentNode.data.options.find(opt => opt.id === answers[currentNode.id]);
+            if (currentOption && currentOption.nextNodeId) {
+                const nextNodeIndex = questionNodes.findIndex(node => node.id === currentOption.nextNodeId);
+                if (nextNodeIndex !== -1) {
+                    setCurrentNodeIndex(nextNodeIndex);
+                    setPath(prev => [...prev, currentOption.nextNodeId]);
+                    updateURL(currentOption.nextNodeId);
+                }
+            }
+        }
+    };
 
-        // const newSearchParams = new URLSearchParams(params);
-        // newSearchParams.set("node", previousNodeId);
-        // const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-        // router.push(newPathname);
-        // } else if (currentIndex === 0) {
-        //     // If we're at the first entry, remove the node parameter
-        //     const newSearchParams = new URLSearchParams(params);
-        //     newSearchParams.delete("node");
-        //     const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-        //     router.push(newPathname);
-        // } else {
-        //     console.log("Current node not found in entries");
-        // }
-    }
+    const handlePrevious = () => {
+        if (currentNodeIndex > 0) {
+            const prevIndex = currentNodeIndex - 1;
+            setCurrentNodeIndex(prevIndex);
+            updateURL(path[prevIndex]);
+        }
+    };
 
+    if (!currentNode) return null;
+
+    // @ts-ignore
+    const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId)
 
     return (
-        <form onSubmit={handleSubmit} className={cn("max-w-md space-y-6 p-8 transition duration-200 opacity-0 @lg:opacity-100 flex-shrink-0 w-full")}>
-            <div className="space-y-2">
+        <div className="relative px-4 max-w-md space-y-6 flex flex-col justify-between transition duration-200 opacity-0 @lg:opacity-100 flex-shrink-0 w-full h-full">
+            <div className="space-y-4">
+                <Button size="icon" onClick={handlePrevious} disabled={currentNodeIndex === 0}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
                 {/* @ts-ignore */}
-                <p className="text-balance text-sm font-medium whitespace-nowrap text-muted-foreground">{node?.data.question}</p>
+                <h3 className="text-lg font-semibold">{currentNode.data.question}</h3>
             </div>
-            <RadioGroup value={state} onValueChange={setState} name={node?.id} defaultValue={node?.data.options[0].id}>
-                {/* @ts-ignore */}
-                {node?.data.options?.filter(option => !!option.nextNodeId)?.map(option => (
-                    <div key={option.id} className="flex items-center space-x-2">
-                        <RadioGroupItem value={option.nextNodeId} id={option.id} />
-                        <Label htmlFor={option.id}>{option.text}</Label>
-                    </div>
-                ))}
-            </RadioGroup>
-            <div className="flex justify-between">
-                {!!store.size && <Button onClick={handlePrevious} type="button">Previous</Button>}
-                <Button disabled={!state} type="submit">Next</Button>
+            <div key={currentNode.id} className="space-y-4">
+                <RadioGroup
+                    value={answers[currentNode.id] || ''}
+                    onValueChange={(value) => handleAnswerChange(currentNode.id, value)}
+                >
+                    {filteredOptions.map(option => (
+                        <div key={option.id} className="flex items-center space-x-2">
+                            <RadioGroupItem className="peer sr-only" value={option.id} id={option.id} />
+                            <label htmlFor={option.id} className="text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-colors leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                {option.text}
+                            </label>
+                        </div>
+                    ))}
+                </RadioGroup>
             </div>
-        </form>
-    )
+            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id] || currentNodeIndex === questionNodes.length - 1}>
+                Next
+            </Button>
+        </div>
+    );
 }
