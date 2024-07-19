@@ -52,6 +52,8 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
 
     const params = useSearchParams()
 
+    const currentNodeId = params.get("node")
+
     const connectingNodeId = useRef(null);
     const nameRef = useRef<HTMLInputElement | null>(null)
 
@@ -352,6 +354,18 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
     useEffect(() => {
         centerOnFirstNode();
     }, [centerOnFirstNode]);
+
+    useEffect(() => {
+        if (currentNodeId) {
+            const current = nodes.find(node => node.id === currentNodeId)
+
+            if (current) {
+                setTimeout(() => {
+                    setCenter(current.position.x, current.position.y, { zoom: 1, duration: 1000 });
+                }, 100);
+            }
+        }
+    }, [currentNodeId])
 
     return (
         <React.Fragment>
