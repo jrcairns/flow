@@ -22,6 +22,7 @@ const config = {
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/no-floating-promises": "off",
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/prefer-optional-chain": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-interface": "off",
