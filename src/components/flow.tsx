@@ -19,7 +19,7 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud } from "lucide-react";
+import { Check, ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud } from "lucide-react";
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -37,6 +37,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Popover, PopoverContent } from './ui/popover';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import questionNode from './question-node';
 
 const nodeTypes = {
     question: QuestionNode,
@@ -438,9 +439,9 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         </SignedIn>
 
                         <Panel className="hidden @[64rem]:block max-w-md w-full mt-5" position="top-center">
-                            <div className="cursor-not-allowed relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
-                                <Input disabled placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
-                                <Button disabled>
+                            <div className="relative h-9 shadow rounded-md bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
+                                <Input placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
+                                <Button>
                                     Generate ✨
                                 </Button>
                                 <div className="absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-muted/50 backdrop-blur-sm border text-[11px] px-1 text-muted-foreground/50 rounded-md">Coming soon 🎉</div>
@@ -578,76 +579,73 @@ export function Preview({ nodes, edges }: PreviewProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    const { getNode } = useReactFlow();
+
     const questionNodes = useMemo(() => nodes.filter(node => node.type === 'question'), [nodes]);
 
     const [answers, setAnswers] = useState<Record<string, string>>({});
-    const [currentNodeIndex, setCurrentNodeIndex] = useState(() => {
-        const nodeParam = searchParams.get('node');
-        return nodeParam ? questionNodes.findIndex(node => node.id === nodeParam) : 0;
-    });
     const [path, setPath] = useState<string[]>(() => {
         const nodeParam = searchParams.get('node');
         return nodeParam ? [nodeParam] : (questionNodes.length > 0 ? [questionNodes[0].id] : []);
     });
 
-    const currentNode = questionNodes[currentNodeIndex];
+    const currentNodeId = path[path.length - 1];
+    const currentNode = questionNodes.find(node => node.id === currentNodeId);
+
+    useEffect(() => {
+        if (currentNodeId) {
+            updateURL(currentNodeId);
+        }
+    }, [currentNodeId]);
 
     const updateURL = (nodeId: string) => {
-        const newSearchParams = new URLSearchParams(searchParams);
-        newSearchParams.set("node", nodeId);
-        const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-        router.push(newPathname);
-    };
-
-    const handleAnswerChange = (nodeId: string, optionId: string) => {
-        setAnswers(prev => ({ ...prev, [nodeId]: optionId }));
-
-        // @ts-ignore
-        const currentOption = currentNode.data.options.find(opt => opt.id === optionId);
-        if (currentOption && currentOption.nextNodeId) {
-            const nextNodeIndex = questionNodes.findIndex(node => node.id === currentOption.nextNodeId);
-            if (nextNodeIndex !== -1) {
-                setPath(prev => [...prev.slice(0, currentNodeIndex + 1), currentOption.nextNodeId]);
-            }
+        if (nodeId) {
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.set("node", nodeId);
+            const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
+            router.push(newPathname);
         }
     };
 
+    const handleAnswerChange = (nodeId: string, optionId: string) => {
+        console.log('Answer changed:', { nodeId, optionId });
+        setAnswers(prev => ({ ...prev, [nodeId]: optionId }));
+    };
+
     const handleNext = () => {
-        if (currentNodeIndex < path.length - 1) {
-            const nextIndex = currentNodeIndex + 1;
-            setCurrentNodeIndex(nextIndex);
-            updateURL(path[nextIndex]);
-        } else if (answers[currentNode.id] && currentNodeIndex < questionNodes.length - 1) {
-            // @ts-ignore
-            const currentOption = currentNode.data.options.find(opt => opt.id === answers[currentNode.id]);
-            if (currentOption && currentOption.nextNodeId) {
-                const nextNodeIndex = questionNodes.findIndex(node => node.id === currentOption.nextNodeId);
-                if (nextNodeIndex !== -1) {
-                    setCurrentNodeIndex(nextNodeIndex);
-                    setPath(prev => [...prev, currentOption.nextNodeId]);
-                    updateURL(currentOption.nextNodeId);
-                }
+        if (!currentNode || !answers[currentNode.id]) return;
+
+        const selectedOptionId = answers[currentNode.id];
+        // @ts-ignore
+        const currentOption = currentNode.data?.options?.find(opt => opt.id === selectedOptionId);
+
+        if (currentOption && currentOption.nextNodeId) {
+            const nextNode = questionNodes.find(node => node.id === currentOption.nextNodeId);
+            if (nextNode) {
+                setPath(prev => [...prev, nextNode.id]);
+            } else {
+                console.error('Next node not found in questionNodes');
             }
+        } else {
+            console.error('No next node ID found for the selected option');
         }
     };
 
     const handlePrevious = () => {
-        if (currentNodeIndex > 0) {
-            const prevIndex = currentNodeIndex - 1;
-            setCurrentNodeIndex(prevIndex);
-            updateURL(path[prevIndex]);
+        if (path.length > 1) {
+            setPath(prev => prev.slice(0, -1));
         }
     };
 
     if (!currentNode) return null;
 
     // @ts-ignore
-    const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId)
+    const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId) || [];
 
     return (
         <div className="relative px-4 max-w-md space-y-6 flex flex-col justify-between transition duration-200 opacity-0 @lg:opacity-100 flex-shrink-0 w-full h-full">
             <div className="space-y-4">
-                <Button size="icon" onClick={handlePrevious} disabled={currentNodeIndex === 0}>
+                <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
                 {/* @ts-ignore */}
@@ -659,16 +657,17 @@ export function Preview({ nodes, edges }: PreviewProps) {
                     onValueChange={(value) => handleAnswerChange(currentNode.id, value)}
                 >
                     {filteredOptions.map(option => (
-                        <div key={option.id} className="flex items-center space-x-2">
+                        <div key={option.id} className="flex items-center relative">
                             <RadioGroupItem className="peer sr-only" value={option.id} id={option.id} />
-                            <label htmlFor={option.id} className="text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-colors leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <Check className="hidden peer-data-[state=checked]:block w-3.5 h-3.5 z-10 absolute right-4" />
+                            <label htmlFor={option.id} className="flex justify-between items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-colors leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 {option.text}
                             </label>
                         </div>
                     ))}
                 </RadioGroup>
             </div>
-            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id] || currentNodeIndex === questionNodes.length - 1}>
+            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id] || questionNodes.indexOf(currentNode) === questionNodes.length - 1}>
                 Next
             </Button>
         </div>
