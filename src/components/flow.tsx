@@ -371,7 +371,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
             <div className="flex h-full">
                 <div className="flex-1 @container z-10 relative">
                     {params.get("dialog") === "preview" && (
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10">
+                        <div className="absolute right-0 top-1/3 translate-x-1/2 z-10">
                             <Button onClick={() => {
                                 const newSearchParams = new URLSearchParams(params);
                                 newSearchParams.delete("dialog");
@@ -544,7 +544,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         </Panel>
                     </ReactFlow>
                 </div>
-                <div className={cn("flex items-center justify-center transition-all duration-1000 @container relative", params.get("dialog") === "preview" ? "w-1/2 opacity-100" : "w-0 opacity-0")}>
+                <div className={cn("flex items-center justify-center transition-all duration-1000 @container relative", params.get("dialog") === "preview" ? "w-[500px] opacity-100" : "w-0 opacity-0")}>
                     <Preview nodes={nodes} edges={edges} />
                 </div>
             </div>
@@ -643,7 +643,7 @@ export function Preview({ nodes, edges }: PreviewProps) {
     const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId) || [];
 
     return (
-        <div className="relative px-4 max-w-md space-y-6 flex flex-col justify-between transition duration-200 opacity-0 @lg:opacity-100 flex-shrink-0 w-full h-full">
+        <div className="relative px-4 space-y-6 flex flex-col justify-between opacity-0 @[500px]:opacity-100 flex-shrink-0 w-full h-full">
             <div className="space-y-4">
                 <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
                     <ChevronLeft className="h-3.5 w-3.5" />
