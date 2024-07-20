@@ -18,9 +18,9 @@ export default function RootLayout({
       <body>
         <ClerkProvider
           appearance={{
-            baseTheme: dark,
+            // baseTheme: dark,
             variables: {
-              colorBackground: "hsl(20,14.3%,4.1%)"
+              // colorBackground: "hsl(20,14.3%,4.1%)"
             }
           }}>
           <QueryProvider>
