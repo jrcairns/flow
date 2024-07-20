@@ -519,7 +519,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 </PopoverTrigger>
                                 <PopoverContent className="origin-bottom-right space-y-2 text-sm p-0 border-none" align="end" side="top" sideOffset={-32}>
                                     <div className="rounded-md border p-4 bg-muted/10 relative">
-                                        <span className="absolute right-2 top-0 bg-[#151211] text-[11px] rounded-md border px-2 py-1 block leading-none -translate-y-1/2 text-muted-foreground">Legend</span>
+                                        <span className="absolute right-2 top-0 bg-background text-[11px] rounded-md border px-2 py-1 block leading-none -translate-y-1/2 text-muted-foreground">Legend</span>
                                         <div className="flex flex-col space-y-4">
                                             <div className="flex flex-col space-y-2.5">
                                                 <Label className="text-muted-foreground">Question</Label>
@@ -660,7 +660,7 @@ export function Preview({ nodes, edges }: PreviewProps) {
                         <div key={option.id} className="flex items-center relative">
                             <RadioGroupItem className="peer sr-only" value={option.id} id={option.id} />
                             <Check className="hidden peer-data-[state=checked]:block w-3.5 h-3.5 z-10 absolute right-4" />
-                            <label htmlFor={option.id} className="flex justify-between items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-colors leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <label htmlFor={option.id} className="cursor-pointer flex justify-between items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground opacity-70 peer-data-[state=checked]:opacity-100 peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-all leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 {option.text}
                             </label>
                         </div>

@@ -49,7 +49,7 @@ function QuestionNode({ data }) {
     }, [localData.options, nodeId, updateNodeInternals]);
 
     return (
-        <div className={cn("transition-opacity duration-500", isPreviewMode && !isPreviewNodeSelected ? "opacity-20" : "opacity-100")}>
+        <div className={cn("transition-opacity duration-500", isPreviewMode && !isPreviewNodeSelected ? "opacity-30" : "opacity-100")}>
             <div className="font-mono mb-4 text-xs text-muted-foreground peer-hover:text-foreground">
                 {`${nodeId!.padStart(2, '0')}.`}
             </div>
