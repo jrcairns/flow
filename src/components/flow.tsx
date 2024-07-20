@@ -375,7 +375,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             <Button onClick={() => {
                                 const newSearchParams = new URLSearchParams(params);
                                 newSearchParams.delete("dialog");
-                                // newSearchParams.delete("node");
+                                newSearchParams.delete("node");
                                 const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
                                 router.push(newPathname);
                                 setTimeout(centerOnFirstNode, 600)
@@ -593,7 +593,7 @@ export function Preview({ nodes, edges }: PreviewProps) {
     const currentNode = questionNodes.find(node => node.id === currentNodeId);
 
     useEffect(() => {
-        if (currentNodeId) {
+        if (currentNodeId && searchParams.get("node")) {
             updateURL(currentNodeId);
         }
     }, [currentNodeId]);
