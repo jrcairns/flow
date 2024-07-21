@@ -19,7 +19,7 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Check, ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud } from "lucide-react";
+import { Check, ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud, X } from "lucide-react";
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -91,7 +91,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                 sourceHandle: connection.sourceHandle,
                 target: connection.target,
                 animated: true,
-                type: ConnectionLineType.SmoothStep
+                type: ConnectionLineType.SimpleBezier
             };
 
             setEdges((eds) => addEdge(newEdge, eds));
@@ -132,6 +132,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                     type: "question",
                     data: {
                         question: faker.lorem.sentence(),
+                        description: faker.lorem.sentence(),
                         options: Array.from({ length: faker.number.int({ min: 2, max: 4 }) }).map(() => ({
                             id: `answer_${nanoid()}`,
                             text: faker.lorem.words({ min: 1, max: 5 }),
@@ -158,7 +159,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                     sourceHandle: connecting.handleId,
                     target: id,
                     animated: true,
-                    type: ConnectionLineType.SmoothStep
+                    type: ConnectionLineType.SimpleBezier
                 };
 
                 setEdges((eds) => eds.concat(newEdge));
@@ -204,6 +205,8 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                 },
                 data: {
                     question: 'New Question',
+                    description: "New question description",
+                    multipleChoice: false, // Add this line
                     options: [
                         {
                             id: `answer_${nanoid()}`,
@@ -289,7 +292,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 sourceHandle: option.id,
                                 target: newNodeId,
                                 animated: true,
-                                type: ConnectionLineType.SmoothStep
+                                type: ConnectionLineType.SimpleBezier
                             });
 
                             // Update the option's nextNodeId
@@ -519,7 +522,11 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 </PopoverTrigger>
                                 <PopoverContent className="origin-bottom-right space-y-2 text-sm p-0 border-none" align="end" side="top" sideOffset={-32}>
                                     <div className="rounded-md border p-4 bg-muted/10 relative">
-                                        <span className="absolute right-2 top-0 bg-background text-[11px] rounded-md border px-2 py-1 block leading-none -translate-y-1/2 text-muted-foreground">Legend</span>
+                                        <PopoverClose asChild>
+                                            <Button size="icon" className="absolute right-2 top-0 -translate-y-1/2">
+                                                <X className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </PopoverClose>
                                         <div className="flex flex-col space-y-4">
                                             <div className="flex flex-col space-y-2.5">
                                                 <Label className="text-muted-foreground">Question</Label>
@@ -570,9 +577,12 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
     );
 };
 
+import { Checkbox } from '@/components/ui/checkbox';
+
+
 interface PreviewProps {
-    nodes: Node[];
-    edges: Edge[];
+    nodes: any[];
+    edges: any[];
 }
 
 export function Preview({ nodes, edges }: PreviewProps) {
@@ -583,17 +593,18 @@ export function Preview({ nodes, edges }: PreviewProps) {
 
     const questionNodes = useMemo(() => nodes.filter(node => node.type === 'question'), [nodes]);
 
-    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [answers, setAnswers] = useState<Record<string, string[]>>({});
     const [path, setPath] = useState<string[]>(() => {
         const nodeParam = searchParams.get('node');
         return nodeParam ? [nodeParam] : (questionNodes.length > 0 ? [questionNodes[0].id] : []);
     });
+    const [branchStack, setBranchStack] = useState<string[]>([]);
 
     const currentNodeId = path[path.length - 1];
     const currentNode = questionNodes.find(node => node.id === currentNodeId);
 
     useEffect(() => {
-        if (currentNodeId && searchParams.get("node")) {
+        if (currentNodeId) {
             updateURL(currentNodeId);
         }
     }, [currentNodeId]);
@@ -607,67 +618,100 @@ export function Preview({ nodes, edges }: PreviewProps) {
         }
     };
 
-    const handleAnswerChange = (nodeId: string, optionId: string) => {
-        console.log('Answer changed:', { nodeId, optionId });
-        setAnswers(prev => ({ ...prev, [nodeId]: optionId }));
+    const handleAnswerChange = (nodeId: string, optionId: string, isChecked: boolean) => {
+        setAnswers(prev => {
+            const currentAnswers = prev[nodeId] || [];
+            const isMultipleChoice = currentNode.data?.multipleChoice || false;
+
+            if (isMultipleChoice) {
+                if (isChecked) {
+                    return { ...prev, [nodeId]: [...currentAnswers, optionId] };
+                } else {
+                    return { ...prev, [nodeId]: currentAnswers.filter(id => id !== optionId) };
+                }
+            } else {
+                // For single choice, always replace the answer
+                return { ...prev, [nodeId]: [optionId] };
+            }
+        });
     };
 
     const handleNext = () => {
-        if (!currentNode || !answers[currentNode.id]) return;
+        if (!currentNode || !answers[currentNode.id]?.length) return;
 
-        const selectedOptionId = answers[currentNode.id];
-        // @ts-ignore
-        const currentOption = currentNode.data?.options?.find(opt => opt.id === selectedOptionId);
+        const selectedOptionIds = answers[currentNode.id];
+        const nextNodes = selectedOptionIds.map(optionId => {
+            const option = currentNode.data.options.find(opt => opt.id === optionId);
+            return option?.nextNodeId;
+        }).filter(Boolean);
 
-        if (currentOption && currentOption.nextNodeId) {
-            const nextNode = questionNodes.find(node => node.id === currentOption.nextNodeId);
-            if (nextNode) {
-                setPath(prev => [...prev, nextNode.id]);
-            } else {
-                console.error('Next node not found in questionNodes');
-            }
+        if (nextNodes.length > 0) {
+            setBranchStack(prev => [...prev, ...nextNodes.slice(1)]);
+            setPath(prev => [...prev, nextNodes[0]]);
+        } else if (branchStack.length > 0) {
+            const nextBranch = branchStack[0];
+            setBranchStack(prev => prev.slice(1));
+            setPath(prev => [...prev, nextBranch]);
         } else {
-            console.error('No next node ID found for the selected option');
+            console.log('End of questions reached');
         }
     };
 
     const handlePrevious = () => {
         if (path.length > 1) {
             setPath(prev => prev.slice(0, -1));
+            // Reset branch stack when going back
+            setBranchStack([]);
         }
     };
 
     if (!currentNode) return null;
 
-    // @ts-ignore
+    const isMultipleChoice = currentNode.data?.multipleChoice || false;
     const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId) || [];
 
     return (
-        <div className="relative px-4 space-y-6 flex flex-col justify-between opacity-0 @[500px]:opacity-100 flex-shrink-0 w-full h-full">
+        <div className="relative space-y-6 px-4 flex flex-col justify-between transition duration-200 opacity-0 @[500px]:opacity-100 flex-shrink-0 w-full h-full">
             <div className="space-y-4">
                 <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
-                {/* @ts-ignore */}
                 <h3 className="text-lg font-semibold">{currentNode.data.question}</h3>
             </div>
             <div key={currentNode.id} className="space-y-4">
-                <RadioGroup
-                    value={answers[currentNode.id] || ''}
-                    onValueChange={(value) => handleAnswerChange(currentNode.id, value)}
-                >
-                    {filteredOptions.map(option => (
+                {isMultipleChoice ? (
+                    filteredOptions.map(option => (
                         <div key={option.id} className="flex items-center relative">
-                            <RadioGroupItem className="peer sr-only" value={option.id} id={option.id} />
+                            <Checkbox
+                                className="peer sr-only"
+                                id={option.id}
+                                checked={answers[currentNode.id]?.includes(option.id)}
+                                onCheckedChange={(checked) => handleAnswerChange(currentNode.id, option.id, checked === true)}
+                            />
                             <Check className="hidden peer-data-[state=checked]:block w-3.5 h-3.5 z-10 absolute right-4" />
-                            <label htmlFor={option.id} className="cursor-pointer flex justify-between items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground opacity-70 peer-data-[state=checked]:opacity-100 peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-all leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <label htmlFor={option.id} className="cursor-pointer flex items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground opacity-70 peer-data-[state=checked]:opacity-100 peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-all leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 {option.text}
                             </label>
                         </div>
-                    ))}
-                </RadioGroup>
+                    ))
+                ) : (
+                    <RadioGroup
+                        value={answers[currentNode.id]?.[0] || ''}
+                        onValueChange={(value) => handleAnswerChange(currentNode.id, value, true)}
+                    >
+                        {filteredOptions.map(option => (
+                            <div key={option.id} className="flex items-center relative">
+                                <RadioGroupItem className="peer sr-only" value={option.id} id={option.id} />
+                                <Check className="hidden peer-data-[state=checked]:block w-3.5 h-3.5 z-10 absolute right-4" />
+                                <label htmlFor={option.id} className="cursor-pointer flex items-center text-sm font-medium border p-4 rounded-md w-full shadow-inner text-muted-foreground opacity-70 peer-data-[state=checked]:opacity-100 peer-data-[state=checked]:bg-muted/30 peer-data-[state=checked]:outline outline-2 outline-offset-2 outline-border peer-data-[state=checked]:text-foreground transition-all leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    {option.text}
+                                </label>
+                            </div>
+                        ))}
+                    </RadioGroup>
+                )}
             </div>
-            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id] || questionNodes.indexOf(currentNode) === questionNodes.length - 1}>
+            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id]?.length}>
                 Next
             </Button>
         </div>

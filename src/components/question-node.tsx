@@ -11,6 +11,7 @@ import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Textarea } from './ui/textarea';
 import { useSearchParams } from 'next/navigation';
+import { Switch } from './ui/switch'; // Import the Switch component
 
 function QuestionNode({ data }) {
     const nodeId = useNodeId();
@@ -96,6 +97,23 @@ function QuestionNode({ data }) {
                                 value={localData.question}
                                 onChange={(e) => setLocalData(prevState => ({ ...prevState, question: e.target.value }))}
                             />
+                        </div>
+                        <div className="flex flex-col space-y-1.5">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                rows={2}
+                                id="description"
+                                value={localData.description}
+                                onChange={(e) => setLocalData(prevState => ({ ...prevState, description: e.target.value }))}
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id="multiple-choice"
+                                checked={localData.multipleChoice || false}
+                                onCheckedChange={(checked) => setLocalData(prevState => ({ ...prevState, multipleChoice: checked }))}
+                            />
+                            <Label htmlFor="multiple-choice">Allow multiple answers</Label>
                         </div>
                         {localData?.options?.map((option, index) => (
                             <div className="flex flex-col space-y-1.5" key={option.id}>

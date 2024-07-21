@@ -11,7 +11,8 @@ const initialNodes = [
     id: `question_${nanoid()}`,
     type: "question",
     data: {
-      question: faker.lorem.sentences(),
+      question: faker.lorem.sentence(),
+      description: faker.lorem.sentence(),
       options: Array.from({ length: faker.number.int({ min: 1, max: 6 }) }).map(() => ({
         id: `answer_${nanoid()}`,
         text: faker.lorem.words({ min: 1, max: 5 }),
