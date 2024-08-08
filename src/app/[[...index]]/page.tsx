@@ -5,6 +5,7 @@ import { faker } from '@faker-js/faker';
 import { useQuery } from '@tanstack/react-query';
 import { nanoid } from 'nanoid'
 import { useEffect, useState } from 'react';
+import { Toaster } from 'sonner';
 
 const initialNodes = [
   {
@@ -52,8 +53,15 @@ export default function Home() {
   if (!isLoaded) return null
 
   return (
-    <div className="bg-muted/10 sm:p-4 h-svh">
+    <div className="bg-muted dark:bg-background sm:p-4 h-svh">
       <Flow className="sm:border sm:rounded-md" initialNodes={data.nodes} initialEdges={data.edges} />
+      <Toaster
+        toastOptions={{
+          classNames: {
+            toast: 'max-w-xs bg-background shadow-none border-border text-muted-foreground right-0',
+          },
+        }}
+      />
     </div>
   );
 }
