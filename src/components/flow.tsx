@@ -82,40 +82,6 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
         return edges;
     }, []);
 
-    // const adjustNodePositions = useCallback((nodes: any[]) => {
-    //     const rowMap = new Map<number, any[]>();
-
-    //     nodes.forEach(node => {
-    //         const y = node.position.y;
-    //         if (!rowMap.has(y)) rowMap.set(y, []);
-    //         rowMap.get(y)!.push(node);
-    //     });
-
-    //     rowMap.forEach((rowNodes, y) => {
-    //         const count = rowNodes.length;
-    //         const totalWidth = (count - 1) * 400;
-    //         const startX = -totalWidth / 2;
-
-    //         rowNodes.forEach((node, index) => {
-    //             node.position.x = startX + index * 400;
-    //         });
-    //     });
-
-    //     return nodes;
-    // }, []);
-
-    // const { submit, isLoading, object } = useObject({
-    //     api: '/api/generate',
-    //     schema: multipleNodesSchema,
-    //     onFinish({ object }) {
-    //         if (object != null && object.nodes) {
-    //             const newNodes = adjustNodePositions(object.nodes);
-    //             const newEdges = createEdgesFromNodes(newNodes);
-    //             setNodes(newNodes);
-    //             setEdges(newEdges);
-    //         }
-    //     },
-    // });
     const adjustNodePositions = useCallback((nodes: any[]) => {
         console.log("Input nodes to adjustNodePositions:", nodes);
 
@@ -163,11 +129,28 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
         return adjustedNodes;
     }, []);
 
+    const addEdgesWithInterval = (newEdges, index = 0) => {
+        if (index >= newEdges.length) {
+            return; // All edges have been added
+        }
+
+        setEdges(prevEdges => [...prevEdges, newEdges[index]]);
+
+        setTimeout(() => {
+            addEdgesWithInterval(newEdges, index + 1);
+        }, 50);
+    };
+
+    const handleSetEdges = (newEdges) => {
+        setEdges([]); // Clear existing edges
+        addEdgesWithInterval(newEdges);
+    };
+
     const { submit, isLoading, object } = useObject({
         api: '/api/generate',
         schema: multipleNodesSchema,
         onFinish({ object }) {
-            const newNodes = adjustNodePositions(object.nodes)
+            const newNodes = object.nodes
             setNodes(newNodes)
             const newEdges = createEdgesFromNodes(newNodes);
             console.log("Number of nodes before adjustment:", object.nodes.length);
@@ -179,53 +162,26 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                 console.log("New nodes:", newNodes);
                 return newNodes;
             });
-            setEdges(prevEdges => {
-                console.log("Previous edges:", prevEdges);
-                console.log("New edges:", newEdges);
-                return newEdges;
+            setEdges((prevEdges) => {
+                const addEdgeWithDelay = (index) => {
+                    if (index >= newEdges.length) {
+                        return;
+                    }
+
+                    setTimeout(() => {
+                        setEdges((currentEdges) => [...currentEdges, newEdges[index]]);
+                        addEdgeWithDelay(index + 1);
+                    }, 50);
+                };
+
+                // Start adding edges with delay
+                addEdgeWithDelay(0);
+
+                // Return an empty array to clear existing edges immediately
+                return [];
             });
 
         }
-        // onFinish({ object }) {
-        //     console.log("AI response object:", object);
-        //     if (object != null) {
-        //         try {
-        // console.log("Number of nodes before adjustment:", object.nodes.length);
-        // const newNodes = adjustNodePositions(object.nodes)
-        // console.log("Number of nodes after adjustment:", newNodes.length);
-
-        // if (newNodes.length > 0) {
-        //     const newEdges = createEdgesFromNodes(newNodes);
-        //     console.log("Number of new edges:", newEdges.length);
-
-        //     if (newNodes.length > 0 && newEdges.length > 0) {
-        //         setNodes(prevNodes => {
-        //             console.log("Previous nodes:", prevNodes);
-        //             console.log("New nodes:", newNodes);
-        //             return newNodes;
-        //         });
-        //         setEdges(prevEdges => {
-        //             console.log("Previous edges:", prevEdges);
-        //             console.log("New edges:", newEdges);
-        //             return newEdges;
-        //         });
-        //     } else {
-        //         console.error("No valid nodes or edges to set");
-        //         // Handle the error (e.g., show an error message to the user)
-        //     }
-        // } else {
-        //     console.error("No valid nodes after adjustment");
-        //     // Handle the error (e.g., show an error message to the user)
-        // }
-        //         } catch (error) {
-        //             console.error("Error processing nodes:", error);
-        //             // Handle the error (e.g., show an error message to the user)
-        //         }
-        //     } else {
-        //         console.error("Invalid or missing nodes in AI response");
-        //         // Handle the error (e.g., show an error message to the user)
-        //     }
-        // },
     });
 
     const router = useRouter()
