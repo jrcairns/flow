@@ -53,7 +53,7 @@ export default function Home() {
   if (!isLoaded) return null
 
   return (
-    <div className="bg-muted dark:bg-background sm:p-4 h-svh">
+    <div className="bg-background sm:p-4 h-svh">
       <Flow className="sm:border sm:rounded-md" initialNodes={data.nodes} initialEdges={data.edges} />
       <Toaster
         toastOptions={{

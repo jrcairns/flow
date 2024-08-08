@@ -547,7 +547,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         </div>
                     )}
                     <ReactFlow
-                        className={cn("bg-background dark:bg-muted/15 relative", className)}
+                        className={cn("bg-muted/50 dark:bg-muted/15 relative", className)}
                         nodeTypes={nodeTypes}
                         nodes={nodes}
                         edges={edges}
@@ -840,7 +840,10 @@ export function Preview({ nodes, edges }: PreviewProps) {
                 <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
-                <h3 className="text-lg font-semibold">{currentNode.data.question}</h3>
+                <div>
+                    <h3 className="text-lg font-semibold">{currentNode.data.question}</h3>
+                    <p className="text-muted-foreground text-sm mt-1">{currentNode.data.description}</p>
+                </div>
             </div>
             <div key={currentNode.id} className="space-y-4">
                 {isMultipleChoice ? (

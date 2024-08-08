@@ -5,7 +5,7 @@ import { Handle, Position, useNodeId, useReactFlow, useStore, useUpdateNodeInter
 import { nanoid } from 'nanoid';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
@@ -13,7 +13,7 @@ import { Textarea } from './ui/textarea';
 import { useSearchParams } from 'next/navigation';
 import { Switch } from './ui/switch';
 import { motion } from 'framer-motion'
-import { Edit } from 'lucide-react';
+import { Cable, Edit, Plug, Unplug } from 'lucide-react';
 
 function QuestionNode({ data }) {
     const nodeId = useNodeId();
@@ -62,27 +62,33 @@ function QuestionNode({ data }) {
                 {/* <div className="font-mono mb-4 text-xs text-muted-foreground peer-hover:text-foreground">
                     {`${nodeId!.padStart(2, '0')}.`}
                 </div> */}
-                <div className="rounded-md relative border bg-background shadow-md group w-[320px]">
-                    <Handle
-                        type="target"
-                        position={Position.Top}
-                        id={`${nodeId}`}
-                        className="w-3/5 h-4 rounded-md border-border transition-colors bg-background group-hover:border-foreground/30 whitespace-normal"
-                    />
-                    <div className="border-b bg-muted/70 dark:bg-background rounded-t-md">
+                <div className="rounded-md relative border bg-background shadow group w-[320px]">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-center">
+                        <Handle
+                            type="target"
+                            position={Position.Top}
+                            id={`${nodeId}`}
+                            style={{ position: "unset" }}
+                            className={cn(
+                                "rounded-md translate-x-0 border-border transition-colors duration-300 p-2 flex items-center justify-center h-7 w-7 mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
+                            )}
+                        >
+                            <Unplug className="w-3 h-3 pointer-events-none rotate-180" />
+                        </Handle></div>
+                    <div className="border-b bg-muted/50 dark:bg-muted/15 rounded-t-md">
                         <ol className="dark:text-muted-foreground list-decimal list-inside p-2 space-y-0.5 flex flex-col items-start">
                             {data?.options?.map((option, index) => (
                                 <li className="text-xs bg-background py-1 px-2 leading-none rounded-full border" key={option.id}>{option.text}</li>
                             ))}
                         </ol>
                     </div>
-                    <div className="p-4 relative dark:bg-background">
+                    <div className="p-4 pb-5 relative dark:bg-background rounded-b-md">
                         <p className="block leading-snug font-semibold text-sm mb-1">{data?.question}</p>
                         <p className="block leading-snug text-sm text-muted-foreground">{data?.description}</p>
                         <Sheet>
                             <SheetTrigger asChild>
                                 <Button className="absolute -translate-y-1/2 top-0 right-2 shadow-none" size="icon">
-                                    <Edit className="h-3.5 w-3.5" />
+                                    <Edit className="h-3 w-3" />
                                 </Button>
                             </SheetTrigger>
                             <SheetContent className="p-0 gap-0 [--gutter:theme(spacing.4)] flex flex-col">
@@ -146,7 +152,7 @@ function QuestionNode({ data }) {
                             </SheetContent>
                         </Sheet>
                     </div>
-                    <div className="absolute px-2 translate-y-1/2 bottom-0 inset-x-0 grid gap-2 items-center" style={{ gridTemplateColumns: `repeat(${data?.options?.length}, minmax(0, 1fr))` }}>
+                    <div className="absolute px-2 translate-y-2/3 bottom-0 inset-x-0 grid gap-2 items-center" style={{ gridTemplateColumns: `repeat(${data?.options?.length}, minmax(0, 1fr))` }}>
                         {data?.options?.map((option, index) => (
                             <Handle
                                 key={option.id}
@@ -155,10 +161,12 @@ function QuestionNode({ data }) {
                                 id={option.id}
                                 style={{ position: "unset" }}
                                 className={cn(
-                                    "rounded-md h-2 w-full max-w-3/5 translate-x-0 border-border transition-colors mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
-                                    connectedOptionIds.has(option.id) ? "bg-green-500 dark:bg-green-700" : "bg-yellow-500 dark:bg-yellow-700"
+                                    "rounded-md translate-x-0 border-border transition-colors duration-300 p-2 flex items-center justify-center h-auto w-auto mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
+                                    connectedOptionIds.has(option.id) ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-100" : "bg-muted dark:bg-muted/50"
                                 )}
-                            />
+                            >
+                                <Plug className="w-3 h-3 pointer-events-none rotate-180" />
+                            </Handle>
                         ))}
                     </div>
                 </div>
