@@ -2,8 +2,7 @@
 
 import { Flow } from '@/components/flow';
 import { faker } from '@faker-js/faker';
-import { useQuery } from '@tanstack/react-query';
-import { nanoid } from 'nanoid'
+import { nanoid } from 'nanoid';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 

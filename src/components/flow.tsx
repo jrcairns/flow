@@ -56,31 +56,49 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
     const connectingNodeId = useRef(null);
     const nameRef = useRef<HTMLInputElement | null>(null)
 
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const { screenToFlowPosition, setCenter, getNodes, getViewport } = useReactFlow();
 
-    const createEdgesFromNodes = useCallback((nodes: any[]) => {
+    const createEdgesFromNodes = useCallback((nodes: Node[]) => {
         const edges: Edge[] = [];
+        const createdEdges = new Set();
+
         nodes?.forEach(node => {
             if (node.data && node.data.options) {
-                node.data.options.forEach(option => {
+                // @ts-ignore
+                node.data?.options?.forEach(option => {
                     if (option.nextNodeId) {
-                        edges.push({
-                            id: `e${node.id}-${option.id}`,
-                            source: node.id,
-                            sourceHandle: option.id,
-                            target: option.nextNodeId,
-                            animated: true,
-                            type: ConnectionLineType.Step,
-                        });
+                        const edgeKey = `${node.id}-${option.id}-${option.nextNodeId}`;
+
+                        if (!createdEdges.has(edgeKey)) {
+                            const edge: Edge = {
+                                id: `e${edgeKey}-${nanoid(6)}`,
+                                source: node.id,
+                                sourceHandle: option.id,
+                                target: option.nextNodeId,
+                                animated: true,
+                                type: ConnectionLineType.Step,
+                            };
+                            edges.push(edge);
+                            createdEdges.add(edgeKey);
+                        }
                     }
                 });
             }
         });
         return edges;
     }, []);
+
+    const updateEdges = useCallback(() => {
+        const newEdges = createEdgesFromNodes(nodes);
+        setEdges(newEdges);
+    }, [nodes, createEdgesFromNodes, setEdges]);
+
+    useEffect(() => {
+        updateEdges();
+    }, [nodes, updateEdges]);
 
     const adjustNodePositions = useCallback((nodes: any[]) => {
         console.log("Input nodes to adjustNodePositions:", nodes);
@@ -151,12 +169,14 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
         schema: multipleNodesSchema,
         onFinish({ object }) {
             const newNodes = object.nodes
+            // @ts-ignore
             setNodes(newNodes)
+            // @ts-ignore
             const newEdges = createEdgesFromNodes(newNodes);
             console.log("Number of nodes before adjustment:", object.nodes.length);
             console.log("Number of nodes after adjustment:", newNodes.length);
             console.log("Number of new edges:", newEdges.length);
-
+            // @ts-ignore
             setNodes(prevNodes => {
                 console.log("Previous nodes:", prevNodes);
                 console.log("New nodes:", newNodes);
@@ -187,7 +207,10 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
     const router = useRouter()
 
     useEffect(() => {
-        setNodes(object?.nodes?.filter(node => !!node.type && !!node.id && !!node.position && !!node.measured) ?? [])
+        if (object) {
+            // @ts-ignore
+            setNodes(object?.nodes?.filter(node => !!node.type && !!node.id && !!node.position && !!node.measured) ?? [])
+        }
     }, [object?.nodes?.length])
 
     const onConnect = useCallback((connection) => {
@@ -195,6 +218,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
             setNodes((nds) => {
                 return nds.map((node) => {
                     if (node.id === connection.source) {
+                        // @ts-ignore
                         const updatedOptions = node.data.options.map(opt =>
                             opt.id === connection.sourceHandle ? { ...opt, nextNodeId: connection.target } : opt
                         );
@@ -268,6 +292,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                     const updatedNodes = nds.concat(newNode);
                     const updatedSourceNode = updatedNodes.find(node => node.id === connecting.nodeId);
                     if (updatedSourceNode) {
+                        // @ts-ignore
                         updatedSourceNode.data.options = updatedSourceNode.data.options.map(opt =>
                             opt.id === connecting.handleId ? { ...opt, nextNodeId: id } : opt
                         );
@@ -502,13 +527,14 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             </Button>
                         </div>
                     )}
+                    {/* <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'> */}
+                    <Background className="dark:opacity-70 pointer-events-none absolute inset-0 h-full w-full" />
+                    {/* </div> */}
                     <ReactFlow
                         className={cn("bg-muted/50 dark:bg-muted/15 relative", className)}
                         nodeTypes={nodeTypes}
                         nodes={nodes}
                         edges={edges}
-                        minZoom={.3}
-                        maxZoom={.9}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnect}
@@ -523,9 +549,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                             hideAttribution: true
                         }}
                     >
-                        <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'>
-                            <Background className="dark:opacity-70" />
-                        </div>
+
                         <SignedIn>
                             <Panel className="space-x-2 flex" position="top-left">
                                 <DropdownMenu>
@@ -568,7 +592,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                     e.currentTarget.reset();
                                 }
                             }} className="relative h-9 shadow rounded-md bg-background/50 dark:bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
-                                <Input disabled={isLoading} name="query" placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-muted-foreground flex-1 focus-visible:ring-transparent border-none bg-transparent" />
+                                <Input disabled={isLoading} name="query" placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-muted-foreground flex-1 focus-visible:ring-transparent shadow-none border-none bg-transparent" />
                                 <Button disabled={isLoading} className="min-w-24 shadow-none" type="submit">
                                     Generate ✨
                                 </Button>
@@ -608,12 +632,8 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button className="min-w-[90px]" disabled={mutation.isPending}>
-                                            {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (
-                                                <>
-                                                    Publish
-                                                    <UploadCloud className="ml-2 h-3.5 w-3.5" />
-                                                </>
-                                            )}
+                                            <span className="mr-2">Publish</span>
+                                            {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="origin-top-right" align="end" sideOffset={-32}>

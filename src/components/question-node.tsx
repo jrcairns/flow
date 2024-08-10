@@ -91,7 +91,7 @@ function QuestionNode({ data }) {
                                     <Edit className="h-3 w-3" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent className="p-0 gap-0 [--gutter:theme(spacing.4)] flex flex-col">
+                            <SheetContent className="p-0 gap-0 [--gutter:theme(spacing.4)] shadow flex flex-col">
                                 <SheetHeader className="p-[--gutter] border-b">
                                     <SheetTitle>Node details</SheetTitle>
                                     <SheetDescription>Manage your node details and answer tree below.</SheetDescription>
@@ -161,7 +161,7 @@ function QuestionNode({ data }) {
                                 id={option.id}
                                 style={{ position: "unset" }}
                                 className={cn(
-                                    "rounded-md translate-x-0 border-border transition-colors duration-300 p-2 flex items-center justify-center h-auto w-auto mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
+                                    "rounded-md translate-x-0 border-border transition-colors duration-300 flex items-center justify-center h-7 w-7 mx-auto bg-background group-hover:border-foreground/30 whitespace-normal",
                                     connectedOptionIds.has(option.id) ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-100" : "bg-muted dark:bg-muted/50"
                                 )}
                             >
