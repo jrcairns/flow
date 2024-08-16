@@ -1,12 +1,14 @@
 import {
   ClerkProvider
-} from '@clerk/nextjs'
-import { dark } from '@clerk/themes';
+} from '@clerk/nextjs';
 
-import { ReactFlowProvider } from '@xyflow/react'
-import './globals.css'
-import { QueryProvider } from '@/components/query-provider'
+import { QueryProvider } from '@/components/query-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ReactFlowProvider } from '@xyflow/react';
+import './globals.css';
+
+import { GeistSans } from 'geist/font/sans';
+import { DnDProvider } from '@/components/dnd-context';
 
 export default function RootLayout({
   children,
@@ -15,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={GeistSans.className}>
         <ClerkProvider
           appearance={{
             // baseTheme: dark,
@@ -26,7 +28,9 @@ export default function RootLayout({
           <QueryProvider>
             <ThemeProvider>
               <ReactFlowProvider>
-                {children}
+                <DnDProvider>
+                  {children}
+                </DnDProvider>
               </ReactFlowProvider>
             </ThemeProvider>
           </QueryProvider>

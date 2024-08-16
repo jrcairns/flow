@@ -33,7 +33,7 @@ export function ProjectNavigation() {
                     <CircuitBoard className="h-3.5 w-3.5" />
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="shadow">
                 <ManageProjectForm project={data} />
             </DialogContent>
         </Dialog>

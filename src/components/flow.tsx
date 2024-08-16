@@ -1,9 +1,10 @@
 "use client"
 
+import { multipleNodesSchema } from '@/app/api/generate/schema';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/nextjs';
 import { faker } from '@faker-js/faker';
-import { DoubleArrowRightIcon } from '@radix-ui/react-icons';
 import { PopoverClose, PopoverTrigger } from '@radix-ui/react-popover';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -19,15 +20,19 @@ import {
     useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { experimental_useObject as useObject } from 'ai/react';
 import { Check, ChevronLeft, ChevronUp, Info, Loader2, Menu, UploadCloud, X } from "lucide-react";
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import AnnotationNode from './annotation-node';
+import GetStartedNode from './get-started-node';
 import MessageNode from './message-node';
 import { Project } from './project';
 import { ProjectNavigation } from './project-navigation';
 import QuestionNode from './question-node';
+import GenerateNode from './generate-node';
 import { Sidebar } from './sidebar';
 import { Badge } from './ui/badge';
 import { Button, buttonVariants } from './ui/button';
@@ -37,17 +42,26 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Popover, PopoverContent } from './ui/popover';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { experimental_useObject as useObject } from 'ai/react'
-import { multipleNodesSchema } from '@/app/api/generate/schema';
-import { toast } from 'sonner';
+import AnswerEdge from './answer-edge';
+import { DnDProvider, useDnD } from './dnd-context';
+import DndSidebar from './dnd-sidebar';
 
 const nodeTypes = {
     question: QuestionNode,
-    message: MessageNode
+    annotation: AnnotationNode,
+    message: MessageNode,
+    start: GetStartedNode,
+    generate: GenerateNode
+};
+
+const edgeTypes = {
+    answer: AnswerEdge,
 };
 
 const VERTICAL_SPACING = 200;
+
+let id = 0;
+const getId = () => `dndnode_${id++}`;
 
 export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: Node[], initialEdges: Edge[], className?: string }) => {
     const { isSignedIn } = useUser()
@@ -61,44 +75,52 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
 
     const { screenToFlowPosition, setCenter, getNodes, getViewport } = useReactFlow();
 
-    const createEdgesFromNodes = useCallback((nodes: Node[]) => {
-        const edges: Edge[] = [];
-        const createdEdges = new Set();
+    const [type] = useDnD();
 
-        nodes?.forEach(node => {
-            if (node.data && node.data.options) {
-                // @ts-ignore
-                node.data?.options?.forEach(option => {
-                    if (option.nextNodeId) {
-                        const edgeKey = `${node.id}-${option.id}-${option.nextNodeId}`;
-
-                        if (!createdEdges.has(edgeKey)) {
-                            const edge: Edge = {
-                                id: `e${edgeKey}-${nanoid(6)}`,
-                                source: node.id,
-                                sourceHandle: option.id,
-                                target: option.nextNodeId,
-                                animated: true,
-                                type: ConnectionLineType.Step,
-                            };
-                            edges.push(edge);
-                            createdEdges.add(edgeKey);
-                        }
-                    }
-                });
-            }
-        });
-        return edges;
+    const onDragOver = useCallback((event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
     }, []);
 
-    const updateEdges = useCallback(() => {
-        const newEdges = createEdgesFromNodes(nodes);
-        setEdges(newEdges);
-    }, [nodes, createEdgesFromNodes, setEdges]);
+    const onDrop = useCallback(
+        (event) => {
+            event.preventDefault();
+
+            // check if the dropped element is valid
+            if (!type) {
+                return;
+            }
+
+            // project was renamed to screenToFlowPosition
+            // and you don't need to subtract the reactFlowBounds.left/top anymore
+            // details: https://reactflow.dev/whats-new/2023-11-10
+            const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
+            const newNode = {
+                id: getId(),
+                type: "question",
+                position,
+                data: {
+                    question: faker.lorem.sentence(),
+                    description: faker.lorem.sentence(),
+                    options: Array.from({ length: faker.number.int({ min: 2, max: 4 }) }).map(() => ({
+                        id: `answer_${nanoid()}`,
+                        text: faker.lorem.words({ min: 1, max: 5 }),
+                        nextNodeId: null
+                    }))
+                },
+            };
+
+            setNodes((nds) => nds.concat(newNode));
+        },
+        [screenToFlowPosition, type],
+    );
 
     useEffect(() => {
-        updateEdges();
-    }, [nodes, updateEdges]);
+        console.log('nodes changed')
+    }, [onNodesChange])
 
     const adjustNodePositions = useCallback((nodes: any[]) => {
         console.log("Input nodes to adjustNodePositions:", nodes);
@@ -164,54 +186,14 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
         addEdgesWithInterval(newEdges);
     };
 
-    const { submit, isLoading, object } = useObject({
-        api: '/api/generate',
-        schema: multipleNodesSchema,
-        onFinish({ object }) {
-            const newNodes = object.nodes
-            // @ts-ignore
-            setNodes(newNodes)
-            // @ts-ignore
-            const newEdges = createEdgesFromNodes(newNodes);
-            console.log("Number of nodes before adjustment:", object.nodes.length);
-            console.log("Number of nodes after adjustment:", newNodes.length);
-            console.log("Number of new edges:", newEdges.length);
-            // @ts-ignore
-            setNodes(prevNodes => {
-                console.log("Previous nodes:", prevNodes);
-                console.log("New nodes:", newNodes);
-                return newNodes;
-            });
-            setEdges((prevEdges) => {
-                const addEdgeWithDelay = (index) => {
-                    if (index >= newEdges.length) {
-                        return;
-                    }
-
-                    setTimeout(() => {
-                        setEdges((currentEdges) => [...currentEdges, newEdges[index]]);
-                        addEdgeWithDelay(index + 1);
-                    }, 50);
-                };
-
-                // Start adding edges with delay
-                addEdgeWithDelay(0);
-
-                // Return an empty array to clear existing edges immediately
-                return [];
-            });
-
-        }
-    });
-
     const router = useRouter()
 
-    useEffect(() => {
-        if (object) {
-            // @ts-ignore
-            setNodes(object?.nodes?.filter(node => !!node.type && !!node.id && !!node.position && !!node.measured) ?? [])
-        }
-    }, [object?.nodes?.length])
+    // useEffect(() => {
+    //     if (object) {
+    //         // @ts-ignore
+    //         setNodes(object?.nodes?.filter(node => !!node.type && !!node.id && !!node.position && !!node.measured) ?? [])
+    //     }
+    // }, [object?.nodes?.length])
 
     const onConnect = useCallback((connection) => {
         if (connection.source && connection.target && connection.sourceHandle) {
@@ -492,28 +474,13 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
         router.push("/?dialog=auth")
     }
 
-    useEffect(() => {
-        centerOnFirstNode();
-    }, [centerOnFirstNode]);
-
-    useEffect(() => {
-        if (currentNodeId) {
-            const current = nodes.find(node => node.id === currentNodeId)
-
-            if (current) {
-                setTimeout(() => {
-                    setCenter(current.position.x, current.position.y, { zoom: 1, duration: 1000 });
-                }, 100);
-            }
-        }
-    }, [currentNodeId])
-
     return (
         <React.Fragment>
             <div className="flex h-full">
                 {/* <div className="fixed top-0 left-0 bg-black text-white z-50">{isLoading ? 'loading' : 'not loading'}</div> */}
-                <div className="flex-1 @container z-10 relative">
-                    {params.get("dialog") === "preview" && (
+                {params.get("dialog") !== "preview" && (
+                    <div className="flex-1 flex @container z-10 relative">
+                        {/* {params.get("dialog") === "preview" && (
                         <div className="absolute right-0 top-1/3 translate-x-1/2 z-10">
                             <Button onClick={() => {
                                 const newSearchParams = new URLSearchParams(params);
@@ -526,176 +493,194 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                                 <DoubleArrowRightIcon className="w-3.5 h-3.5" />
                             </Button>
                         </div>
-                    )}
-                    {/* <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'> */}
-                    <Background className="dark:opacity-70 pointer-events-none absolute inset-0 h-full w-full" />
-                    {/* </div> */}
-                    <ReactFlow
-                        className={cn("bg-muted/50 dark:bg-muted/15 relative", className)}
-                        nodeTypes={nodeTypes}
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        onConnectStart={onConnectStart}
-                        onConnectEnd={onConnectEnd}
-                        panOnScroll
-                        fitView
-                        snapToGrid
-                        connectionLineType={ConnectionLineType.Step}
-                        nodeOrigin={[0.5, 0.5]}
-                        proOptions={{
-                            hideAttribution: true
-                        }}
-                    >
+                    )} */}
+                        {/* <div className='[mask-image:radial-gradient(55vw_circle_at_50%,white,transparent)] pointer-events-none absolute inset-0 h-full w-full'> */}
+                        <Background className="dark:opacity-70 pointer-events-none absolute inset-0 h-full w-full" />
+                        {/* </div> */}
+                        {/* <div className="mr-4">
+                            <DndSidebar />
+                        </div> */}
+                        <ReactFlow
+                            className={cn("bg-muted/50 dark:bg-muted/15 relative flex-1", className)}
+                            nodeTypes={nodeTypes}
+                            edgeTypes={edgeTypes}
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            onConnectStart={onConnectStart}
+                            onConnectEnd={onConnectEnd}
+                            onDrop={onDrop}
+                            onDragOver={onDragOver}
+                            panOnScroll
+                            fitView
+                            maxZoom={1}
+                            snapToGrid
+                            connectionLineType={ConnectionLineType.SimpleBezier}
+                            nodeOrigin={[0, 0]}
+                            proOptions={{
+                                hideAttribution: true
+                            }}
+                        >
 
-                        <SignedIn>
-                            <Panel className="space-x-2 flex" position="top-left">
+                            <SignedIn>
+                                <Panel className="space-x-2 flex" position="top-left">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button size="icon">
+                                                <Menu className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-64 origin-top-left p-0" side="right" sideOffset={-32} align="start">
+                                            <Sidebar />
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <Project>
+                                        <ProjectNavigation />
+                                    </Project>
+                                </Panel>
+                            </SignedIn>
+                            <SignedOut>
+                                <Panel position="top-left">
+                                    <Link href="/?dialog=auth" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>Log in</Link>
+                                </Panel>
+                            </SignedOut>
+
+                            <SignedIn>
+                                <Panel className="flex" position="bottom-left">
+                                    <UserButton />
+                                </Panel>
+                            </SignedIn>
+
+                            {/* <Panel className="hidden @[64rem]:block max-w-md w-full" position="top-center">
+                                <form onSubmit={e => {
+                                    e.preventDefault();
+                                    const input = e.currentTarget.query as HTMLInputElement;
+                                    if (input.value.trim()) {
+                                        // @ts-ignore
+                                        toast.promise(submit({ prompt: input.value }), {
+                                            loading: "Generating your quiz",
+                                            success: "Quiz generated successfully"
+                                        })
+                                        e.currentTarget.reset();
+                                    }
+                                }} className="relative h-9 shadow rounded-md bg-background/50 dark:bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
+                                    <Input disabled={isLoading} name="query" placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-muted-foreground flex-1 focus-visible:ring-transparent shadow-none border-none bg-transparent" />
+                                    <Button disabled={isLoading} className="min-w-24 shadow-none" type="submit">
+                                        Generate ✨
+                                    </Button>
+                                </form>
+                            </Panel> */}
+
+                            {/* <Panel className="space-x-2" position="bottom-center">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button size="icon">
-                                            <Menu className="w-3.5 h-3.5" />
-                                        </Button>
+                                        <Button>Add node <ChevronUp className="h-3.5 w-3.5 ml-2" /></Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-64 origin-top-left p-0" side="right" sideOffset={-32} align="start">
-                                        <Sidebar />
+                                    <DropdownMenuContent className="text-xs">
+                                        <DropdownMenuItem onClick={addNewQuestion} className="text-xs">
+                                            New question
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={addFinalNode} className="text-xs">
+                                            Final message
+                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <Project>
-                                    <ProjectNavigation />
-                                </Project>
-                            </Panel>
-                        </SignedIn>
-                        <SignedOut>
-                            <Panel position="top-left">
-                                <Link href="/?dialog=auth" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>Log in</Link>
-                            </Panel>
-                        </SignedOut>
+                            </Panel> */}
+                            <Panel className="space-x-2" position="top-right">
+                                <Button
+                                    disabled={params.get("dialog") === "preview"}
+                                    onClick={() => {
+                                        const newSearchParams = new URLSearchParams(params);
+                                        newSearchParams.set("dialog", "preview")
+                                        newSearchParams.set("node", getNodes()?.[0]?.id)
+                                        const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
 
-                        <SignedIn>
-                            <Panel className="flex" position="bottom-left">
-                                <UserButton />
-                            </Panel>
-                        </SignedIn>
+                                        const width = 640;  // Specify your desired width
+                                        const height = 500; // Specify your desired height
 
-                        <Panel className="hidden @[64rem]:block max-w-md w-full" position="top-center">
-                            <form onSubmit={e => {
-                                e.preventDefault();
-                                const input = e.currentTarget.query as HTMLInputElement;
-                                if (input.value.trim()) {
-                                    // @ts-ignore
-                                    toast.promise(submit({ prompt: input.value }), {
-                                        loading: "Generating your quiz",
-                                        success: "Quiz generated successfully"
-                                    })
-                                    e.currentTarget.reset();
-                                }
-                            }} className="relative h-9 shadow rounded-md bg-background/50 dark:bg-muted/30 backdrop-blur-sm items-center border !hover:border-foreground/30 flex text-muted-foreground hover:text-foreground transition-colors pr-px">
-                                <Input disabled={isLoading} name="query" placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-50 text-muted-foreground flex-1 focus-visible:ring-transparent shadow-none border-none bg-transparent" />
-                                <Button disabled={isLoading} className="min-w-24 shadow-none" type="submit">
-                                    Generate ✨
+                                        const left = (screen.width - width) / 2;
+                                        const top = (screen.height - height) / 2;
+
+                                        window.open(
+                                            `${window.location.pathname}?${newSearchParams.toString()}`,
+                                            'Preview Window',
+                                            `width=${width},height=${height},left=${left},top=${top},resizable=no`
+                                        );
+                                    }}
+                                >
+                                    Preview
                                 </Button>
-                            </form>
-                        </Panel>
+                                {isSignedIn ? (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button className="min-w-[90px]" disabled={mutation.isPending}>
+                                                <span className="mr-2">Publish</span>
+                                                {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="origin-top-right" align="end" sideOffset={-32}>
+                                            <form onSubmit={event => {
+                                                event.preventDefault()
+                                                mutation.mutate()
+                                            }} className="space-y-4">
+                                                <div className="flex flex-col space-y-1.5">
+                                                    <Input disabled={mutation.isPending} ref={nameRef} placeholder="project name" />
+                                                </div>
+                                                <PopoverClose asChild>
+                                                    <Button disabled={mutation.isPending} type="submit" variant="link" className="h-auto w-full">Create project</Button>
+                                                </PopoverClose>
+                                            </form>
+                                        </PopoverContent>
+                                    </Popover>
+                                ) : (
+                                    <Button onClick={handleLocalPublish}>
+                                        Publish <UploadCloud className="ml-2 h-3.5 w-3.5" />
+                                    </Button>
+                                )}
+                            </Panel>
 
-                        <Panel className="space-x-2" position="bottom-center">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button>Add node <ChevronUp className="h-3.5 w-3.5 ml-2" /></Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="text-xs">
-                                    <DropdownMenuItem onClick={addNewQuestion} className="text-xs">
-                                        New question
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={addFinalNode} className="text-xs">
-                                        Final message
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </Panel>
-                        <Panel className="space-x-2" position="top-right">
-                            <Button
-                                disabled={params.get("dialog") === "preview"}
-                                onClick={() => {
-                                    const newSearchParams = new URLSearchParams(params);
-                                    newSearchParams.set("dialog", "preview")
-                                    newSearchParams.set("node", getNodes()?.[0]?.id)
-                                    const newPathname = `${window.location.pathname}?${newSearchParams.toString()}`;
-                                    router.push(newPathname);
-                                    setTimeout(centerOnFirstNode, 600)
-                                }}
-                            >
-                                Preview
-                            </Button>
-                            {isSignedIn ? (
+                            <Panel position="bottom-right">
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button className="min-w-[90px]" disabled={mutation.isPending}>
-                                            <span className="mr-2">Publish</span>
-                                            {mutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                                        <Button size="icon">
+                                            <Info className="w-3.5 h-3.5" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="origin-top-right" align="end" sideOffset={-32}>
-                                        <form onSubmit={event => {
-                                            event.preventDefault()
-                                            mutation.mutate()
-                                        }} className="space-y-4">
-                                            <div className="flex flex-col space-y-1.5">
-                                                <Input disabled={mutation.isPending} ref={nameRef} placeholder="project name" />
-                                            </div>
+                                    <PopoverContent className="origin-bottom-right space-y-2 text-sm p-0 border-none" align="end" side="top" sideOffset={-32}>
+                                        <div className="rounded-md border p-4 bg-muted/10 relative">
                                             <PopoverClose asChild>
-                                                <Button disabled={mutation.isPending} type="submit" variant="link" className="h-auto w-full">Create project</Button>
+                                                <Button size="icon" className="absolute right-2 top-0 -translate-y-1/2">
+                                                    <X className="h-3.5 w-3.5" />
+                                                </Button>
                                             </PopoverClose>
-                                        </form>
-                                    </PopoverContent>
-                                </Popover>
-                            ) : (
-                                <Button onClick={handleLocalPublish}>
-                                    Publish <UploadCloud className="ml-2 h-3.5 w-3.5" />
-                                </Button>
-                            )}
-                        </Panel>
-
-                        <Panel position="bottom-right">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button size="icon">
-                                        <Info className="w-3.5 h-3.5" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="origin-bottom-right space-y-2 text-sm p-0 border-none" align="end" side="top" sideOffset={-32}>
-                                    <div className="rounded-md border p-4 bg-muted/10 relative">
-                                        <PopoverClose asChild>
-                                            <Button size="icon" className="absolute right-2 top-0 -translate-y-1/2">
-                                                <X className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </PopoverClose>
-                                        <div className="flex flex-col space-y-4">
-                                            <div className="flex flex-col space-y-2.5">
-                                                <Label className="text-muted-foreground">Question</Label>
-                                                <div className="bg-background border rounded-md px-6 py-4 w-full relative">
-                                                    <div className="bg-background absolute w-3/5 h-4 border rounded-md top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                                                    <Badge className="rounded-full mb-1.5 !text-xs">2 answers</Badge>
-                                                    <span className="text-muted-foreground line-clamp-2 min-h-[2lh]">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid non quis nobis quibusdam magnam voluptatem.</span>
+                                            <div className="flex flex-col space-y-4">
+                                                <div className="flex flex-col space-y-2.5">
+                                                    <Label className="text-muted-foreground">Question</Label>
+                                                    <div className="bg-background border rounded-md px-6 py-4 w-full relative">
+                                                        <div className="bg-background absolute w-3/5 h-4 border rounded-md top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                                                        <Badge className="rounded-full mb-1.5 !text-xs">2 answers</Badge>
+                                                        <span className="text-muted-foreground line-clamp-2 min-h-[2lh]">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid non quis nobis quibusdam magnam voluptatem.</span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2.5 flex flex-col">
+                                                    <Label className="text-muted-foreground">Connected answer</Label>
+                                                    <div className="rounded-md h-3 w-full max-w-3/5 bg-green-500 dark:bg-green-700"></div>
+                                                </div>
+                                                <div className="space-y-2.5 flex flex-col">
+                                                    <Label className="text-muted-foreground">Disconnected answer</Label>
+                                                    <div className="rounded-md h-3 w-full max-w-3/5 bg-yellow-500 dark:bg-yellow-700"></div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-2.5 flex flex-col">
-                                                <Label className="text-muted-foreground">Connected answer</Label>
-                                                <div className="rounded-md h-3 w-full max-w-3/5 bg-green-500 dark:bg-green-700"></div>
-                                            </div>
-                                            <div className="space-y-2.5 flex flex-col">
-                                                <Label className="text-muted-foreground">Disconnected answer</Label>
-                                                <div className="rounded-md h-3 w-full max-w-3/5 bg-yellow-500 dark:bg-yellow-700"></div>
-                                            </div>
                                         </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        </Panel>
-                    </ReactFlow>
-                </div>
-                <div className={cn("flex items-center justify-center transition-all duration-1000 @container relative", params.get("dialog") === "preview" ? "w-[500px] opacity-100" : "w-0 opacity-0")}>
+                                    </PopoverContent>
+                                </Popover>
+                            </Panel>
+                        </ReactFlow>
+                    </div>
+                )}
+                <div className={cn("flex items-center justify-center transition-all duration-1000 @container relative", params.get("dialog") === "preview" ? "w-full opacity-100" : "w-0 opacity-0")}>
                     {!!nodes.length ? (
                         <Preview nodes={nodes} edges={edges} />
                     ) : <div>no nodes</div>}
@@ -727,9 +712,9 @@ export function Preview({ nodes, edges }: PreviewProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const { getNode } = useReactFlow();
+    const questionNodes = useMemo(() => nodes.filter(node => node.type === 'question' || node.type === 'start'), [nodes]);
 
-    const questionNodes = useMemo(() => nodes.filter(node => node.type === 'question'), [nodes]);
+    console.log({ questionNodes })
 
     const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
@@ -811,11 +796,11 @@ export function Preview({ nodes, edges }: PreviewProps) {
     const filteredOptions = currentNode.data?.options?.filter(option => !!option.nextNodeId) || [];
 
     return (
-        <div className="relative space-y-6 px-4 flex flex-col justify-between transition opacity-0 @[500px]:opacity-100 duration-200 flex-shrink-0 w-full h-full">
+        <div className="relative space-y-6 flex flex-col justify-between transition opacity-0 @[500px]:opacity-100 duration-200 flex-shrink-0 w-full h-full">
             <div className="space-y-4">
-                <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
+                {/* <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
                     <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
+                </Button> */}
                 <div>
                     <h3 className="text-lg font-semibold">{currentNode.data.question}</h3>
                     <p className="text-muted-foreground text-sm mt-1">{currentNode.data.description}</p>
@@ -854,9 +839,14 @@ export function Preview({ nodes, edges }: PreviewProps) {
                     </RadioGroup>
                 )}
             </div>
-            <Button size="default" onClick={handleNext} disabled={!answers[currentNode.id]?.length}>
-                Next
-            </Button>
+            <div className="flex justify-end space-x-4">
+                <Button size="icon" onClick={handlePrevious} disabled={path.length <= 1}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleNext} disabled={!answers[currentNode.id]?.length}>
+                    Next
+                </Button>
+            </div>
         </div>
     );
 }

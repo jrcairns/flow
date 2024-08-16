@@ -47,16 +47,16 @@ export async function POST(req: Request) {
                  6. Ensure all IDs (for both questions and answers) are unique across the entire quiz structure.
                  7. Use the 'nextNodeId' in options to create the branching structure.
                  8. Position nodes to represent the funnel structure:
-                    - Start with y = 0 for the first question.
-                    - Increment y by 300 for each level of depth in the funnel.
+                    - Start with y = 575 for the first question.
+                    - Increment y by 500 for each level of depth in the funnel.
                     - For nodes on the same level (same y value):
                       * Calculate the total number of nodes in the row.
-                      * Space nodes horizontally with 400 units between each node.
+                      * Space nodes horizontally with 600 units between each node.
                       * Center the group of nodes. For example:
                         - 1 node: x = 0
-                        - 2 nodes: x = -200 and x = 200
-                        - 3 nodes: x = -400, x = 0, and x = 400
-                        - 4 nodes: x = -600, x = -200, x = 200, and x = 600
+                        - 2 nodes: x = -300 and x = 300
+                        - 3 nodes: x = -600, x = 0, and x = 600
+                        - 4 nodes: x = -900, x = -300, x = 300, and x = 900
                       * Adjust this pattern for any number of nodes in a row.
                  9. Ensure the quiz flow logically narrows down information based on previous answers.
                  10. The quiz content should be directly relevant to the user's prompt.
