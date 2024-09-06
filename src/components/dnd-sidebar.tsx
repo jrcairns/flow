@@ -2,7 +2,7 @@ import React from 'react';
 import { useDnD } from './dnd-context';
 import { MacFrame } from './mac-frame';
 
-export default () => {
+export default function DndSidebar() {
     const [_, setType] = useDnD();
 
     const onDragStart = (event, nodeType) => {
