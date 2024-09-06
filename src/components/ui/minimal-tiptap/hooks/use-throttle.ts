@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 
+// @ts-ignore
 export const useThrottle = <T>(value: T, ms: number = 200) => {
   const [state, setState] = useState<T>(value)
   const timeout = useRef<ReturnType<typeof setTimeout>>()
