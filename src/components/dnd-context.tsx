@@ -1,7 +1,8 @@
 "use client"
 import { createContext, useContext, useState } from 'react';
 
-const DnDContext = createContext([null, (_) => { }]);
+// @ts-ignore
+const DnDContext = createContext(null);
 
 export function DnDProvider({ children }) {
     const [type, setType] = useState(null);
