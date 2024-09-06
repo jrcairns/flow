@@ -11,7 +11,7 @@ function AnnotationNode({ data }) {
             className="group"
         >
             <div className="p-2.5 flex w-64 font-mono">
-                <div className="mr-1">{data.level}.</div>
+                {data.level && <div className="mr-1">{data.level}.</div>}
                 <div className="text-balance">{data.label}</div>
             </div>
             {data.arrowStyle && (

@@ -11,6 +11,7 @@ import { MinimalTiptapEditor } from './ui/minimal-tiptap';
 
 import Document from '@tiptap/extension-document';
 import { MacFrame } from './mac-frame';
+import { Skeleton } from './ui/skeleton';
 
 const CustomDocument = Document.extend({
     content: 'heading block*',
@@ -87,20 +88,47 @@ function GetStartedNode({ data }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
         >
-            <MacFrame className="relative group w-[500px] bg-background rounded-lg border shadow">
-                <MinimalTiptapEditor
-                    autofocus="end"
-                    content={`
+            <MacFrame className="relative group w-[800px] bg-background rounded-lg border">
+                <div className="bg-muted/70 dark:bg-muted/25 pt-1 flex">
+                    <div className="flex-1 space-y-4 p-4">
+                        <div className="space-y-0.5">
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-3.5 w-40" />
+                        </div>
+                        <div className="space-y-0.5">
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-3.5 w-40" />
+                        </div>
+                        <div className="space-y-0.5">
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-3.5 w-40" />
+                        </div>
+                        <div className="space-y-0.5">
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-3.5 w-40" />
+                        </div>
+                    </div>
+                    <div className="rounded-l-md border border-r-0 rounded-br-md border-b-0 rounded-bl-none bg-background w-3/5 flex flex-col items-center justify-center">
+                        <MinimalTiptapEditor
+                            autofocus="end"
+                            content={`
                         <h1>Welcome to Company's Client Quiz!</h1>
                         <p>Hey, thanks for stopping by.</p>
                         <p>Let's jump in when you're ready.</p>
                     `}
-                    value={value}
-                    onValueChange={setValue}
-                    editorContentClassName="max-w-3xl mx-auto w-full"
-                />
-                <div className="p-6 pt-0 text-center">
-                    <Button variant="secondary">Let&apos;s start</Button>
+                            value={value}
+                            onValueChange={setValue}
+                            editorContentClassName="max-w-3xl mx-auto w-full"
+                        />
+                        <div className="p-6 pt-0 text-center">
+                            {/* <Button variant="secondary">Let&apos;s start</Button> */}
+                            <Skeleton className="h-6 w-16 animate-none" />
+                        </div>
+                    </div>
                 </div>
             </MacFrame>
         </motion.div>

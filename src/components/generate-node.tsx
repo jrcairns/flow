@@ -14,6 +14,11 @@ import { Input } from './ui/input';
 import { experimental_useObject } from 'ai/react';
 import { multipleNodesSchema } from '@/app/api/generate/schema';
 import { toast } from 'sonner';
+import { MacFrame } from './mac-frame';
+import { Skeleton } from './ui/skeleton';
+import { FileUpload } from './ui/file-upload';
+import { Textarea } from './ui/textarea';
+import { Loader, Loader2 } from 'lucide-react';
 
 const CustomDocument = Document.extend({
     content: 'heading block*',
@@ -138,6 +143,71 @@ function GenerateNode({ data }) {
                 if (newNodes.length > 0) {
                     const lastNode = newNodes[newNodes.length - 1];
                     const { zoom } = getViewport();
+
+                    updatedNodes.push({
+                        id: 'annotation-4',
+                        type: 'annotation',
+                        draggable: false,
+                        selectable: false,
+                        data: {
+                            level: 4,
+                            label:
+                                "Setup how you want to process the input",
+                            arrowStyle: {
+                                right: 32,
+                                bottom: -24,
+                                position: "absolute",
+                                transform: 'rotate(-80deg)',
+                            },
+                        },
+                        position: { x: -250, y: lastNode.position.y + 250 },
+                    },)
+
+                    updatedNodes.push({
+                        id: 'process',
+                        type: 'process',
+                        draggable: false,
+                        selectable: false,
+                        data: {
+                            level: 1,
+                            label:
+                                "Setup how you want to process the input",
+                            arrowStyle: {
+                                right: 32,
+                                bottom: -24,
+                                position: "absolute",
+                                transform: 'rotate(-80deg)',
+                            },
+                        },
+                        position: { x: 0, y: lastNode.position.y + 360 },
+                    },)
+
+                    // updatedNodes.push({
+                    //     id: 'process',
+                    //     type: 'process',
+                    //     position: {
+                    //         x: 0,
+                    //         y: newNodeY
+                    //     },
+                    //     data: {
+                    //         question: 'New Question',
+                    //         description: "New question description",
+                    //         multipleChoice: false,
+                    //         options: [
+                    //             {
+                    //                 id: `answer_${nanoid()}`,
+                    //                 text: 'Option 1',
+                    //                 nextNodeId: null
+                    //             },
+                    //             {
+                    //                 id: `answer_${nanoid()}`,
+                    //                 text: 'Option 2',
+                    //                 nextNodeId: null
+                    //             }
+                    //         ]
+                    //     }
+                    // })
+
                     const centerX = lastNode.position.x + (NODE_WIDTH / 2 / zoom);
                     setCenter(centerX, lastNode.position.y, { zoom: 1, duration: 1000 });
                 }
@@ -166,6 +236,12 @@ function GenerateNode({ data }) {
 
         }
     });
+
+    const [files, setFiles] = useState<File[]>([]);
+
+    const handleFileUpload = (files: File[]) => {
+        setFiles(files);
+    };
 
     // useEffect(() => {
     //     if (object) {
@@ -205,44 +281,43 @@ function GenerateNode({ data }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
         >
-            <form onSubmit={e => {
-                e.preventDefault();
-                const input = e.currentTarget.query as HTMLInputElement;
-                if (input.value.trim()) {
-                    // @ts-ignore
-                    toast.promise(submit({ prompt: input.value }), {
-                        loading: "Generating your quiz",
-                        success: "Quiz generated successfully"
-                    })
-                    e.currentTarget.reset();
-                }
-            }} className="w-[500px] relative border bg-background shadow dark:bg-background backdrop-blur-sm items-center flex focus-within:outline pr-0.5 rounded-md">
-                <Input disabled={isLoading} name="query" placeholder="6-8 questions, dentist, new client onboarding" className="placeholder:opacity-75 flex-1 focus-visible:ring-transparent shadow-none border-none bg-transparent" />
-                <Button variant="secondary" disabled={isLoading} className="min-w-24 shadow-none" type="submit">
-                    Generate <span className="dark:hidden">✨</span>
-                </Button>
-            </form>
-            {/* <div className={cn("transition-opacity duration-500", isPreviewMode && !isPreviewNodeSelected ? "opacity-30" : "opacity-100")}>
-                <div className="relative group w-[500px] bg-background rounded-lg border shadow">
-                    <div className="h-8 border-b rounded-t-xl px-2.5 relative flex items-center">
-                        <div className="flex items-center space-x-1.5">
-                            <span className="h-3.5 w-3.5 bg-red-500 rounded-full"></span>
-                            <span className="h-3.5 w-3.5 bg-yellow-400 rounded-full"></span>
-                            <span className="h-3.5 w-3.5 bg-green-500 rounded-full"></span>
-                        </div>
-                        <span className="absolute left-1/2 -translate-x-1/2 font-medium text-muted-foreground text-sm">https://quiz.flowcala.com</span>
-                    </div>
-                    <MinimalTiptapEditor
-                        value={value}
-                        onValueChange={setValue}
-                        editorContentClassName="max-w-3xl mx-auto w-full"
-                    />
-                    <div className="p-6 pt-0 text-center">
-                        <Button variant="secondary">Let&apos;s start</Button>
+            <div className="w-[800px] space-y-12">
+                <div className="space-y-2 w-[36rem] mx-auto">
+                    <p className="font-mono opacity-50 text-xs">Let AI help generate you a starting off point.</p>
+                    <div className="relative z-40">
+                        <form onSubmit={e => {
+                            e.preventDefault();
+                            const input = e.currentTarget.query as HTMLInputElement;
+                            if (input.value.trim()) {
+                                // @ts-ignore
+                                toast.promise(submit({ prompt: input.value }), {
+                                    loading: "Generating your quiz",
+                                    success: "Quiz generated successfully"
+                                })
+                                e.currentTarget.reset();
+                            }
+                        }}>
+                            <div className="relative">
+                                <Input disabled={isLoading} name="query" placeholder={`6-8 questions, dentist, new client onboarding`} className="bg-background placeholder:opacity-50" />
+
+                            </div>
+                            <div className="mt-2 flex justify-end">
+                                <Button variant="secondary" disabled={isLoading} type="submit">
+                                    {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <span>Generate <span className="dark:hidden">✨</span></span>}
+                                </Button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div> */}
-
+                {/* <div className="flex items-center">
+                    <div className="flex-1 border-b"></div>
+                    <span className="px-4 font-mono opacity-50">OR</span>
+                    <div className="flex-1 border-b"></div>
+                </div>
+                <div className="w-full max-w-4xl mx-auto">
+                    <FileUpload files={files} setFiles={setFiles} />
+                </div> */}
+            </div>
         </motion.div>
     );
 }

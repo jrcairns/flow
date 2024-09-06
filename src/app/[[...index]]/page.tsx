@@ -9,6 +9,32 @@ import { Toaster } from 'sonner';
 
 const initialNodes: Node[] = [
   {
+    id: 'annotation-import',
+    type: 'annotation',
+    draggable: false,
+    selectable: false,
+    data: {
+      level: undefined,
+      label:
+        "Import an existing project.",
+      arrowStyle: {
+        left: 48,
+        bottom: -24,
+        position: "absolute",
+        transform: 'scaleX(-1) rotate(-60deg)',
+      },
+    },
+    position: { x: 650, y: -80 },
+  },
+  {
+    id: 'import',
+    type: 'import',
+    draggable: false,
+    data: {
+    },
+    position: { x: 0, y: 0 },
+  },
+  {
     id: 'annotation-1',
     type: 'annotation',
     draggable: false,
@@ -24,7 +50,7 @@ const initialNodes: Node[] = [
         transform: 'rotate(-80deg)',
       },
     },
-    position: { x: -250, y: -100 },
+    position: { x: -250, y: 220 },
   },
   {
     id: "get-started",
@@ -39,7 +65,7 @@ const initialNodes: Node[] = [
         nextNodeId: null
       }))
     },
-    position: { x: 0, y: 0 },
+    position: { x: 0, y: 300 },
   },
   {
     id: 'annotation-2',
@@ -49,15 +75,15 @@ const initialNodes: Node[] = [
     data: {
       level: 2,
       label:
-        "Let AI help you generate a starting off point.",
+        "Configure your quiz questions and answers.",
       arrowStyle: {
-        left: 24,
+        left: 48,
         bottom: -24,
         position: "absolute",
         transform: 'scaleX(-1) rotate(-60deg)',
       },
     },
-    position: { x: 500, y: 275 },
+    position: { x: 650, y: 675 },
   },
   {
     id: "generate-quiz",
@@ -72,7 +98,7 @@ const initialNodes: Node[] = [
         nextNodeId: null
       }))
     },
-    position: { x: 0, y: 375 },
+    position: { x: 0, y: 775 },
   },
   {
     id: 'annotation-3',
@@ -91,7 +117,7 @@ const initialNodes: Node[] = [
         transform: 'rotate(-80deg)',
       },
     },
-    position: { x: -280, y: 475 },
+    position: { x: -250, y: 475 },
   },
   // {
   //   id: `question_${nanoid()}`,
