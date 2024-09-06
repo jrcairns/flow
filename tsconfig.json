@@ -13,6 +13,14 @@
     "noUncheckedIndexedAccess": true,
     "checkJs": true,
     "noEmitOnError": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "useUnknownInCatchVariables": false,
+    "alwaysStrict": false,
     /* Bundled projects */
     "lib": [
       "dom",
