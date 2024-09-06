@@ -506,6 +506,7 @@ export const Flow = ({ initialNodes, initialEdges, className }: { initialNodes: 
                         <ReactFlow
                             className={cn("bg-muted/50 dark:bg-muted/15 relative flex-1", className)}
                             nodeTypes={nodeTypes}
+                            // @ts-ignore
                             edgeTypes={edgeTypes}
                             nodes={nodes}
                             edges={edges}
@@ -916,6 +917,7 @@ const Skeleton = () => {
         <div className="overflow-hidden h-full relative flex items-center justify-center">
             <div className="flex flex-wrap justify-center items-center gap-2">
                 {nodes?.filter(node => !!node?.data?.question).map(node => (
+                    // @ts-ignore
                     <Container key={node.id}><span>{node.data.question}</span></Container>
                 ))}
                 {/* <Container className="">

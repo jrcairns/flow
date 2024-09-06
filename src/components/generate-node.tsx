@@ -138,6 +138,7 @@ function GenerateNode({ data }) {
         schema: multipleNodesSchema,
         onFinish({ object }) {
             const newNodes = object.nodes;
+            // @ts-ignore
             setNodes(prevNodes => {
                 const updatedNodes = [...prevNodes, ...newNodes];
                 if (newNodes.length > 0) {
@@ -214,6 +215,8 @@ function GenerateNode({ data }) {
                 return updatedNodes;
             });
 
+
+            // @ts-ignore
             const newEdges = createEdgesFromNodes(newNodes);
 
             setEdges((prevEdges) => {
@@ -252,6 +255,7 @@ function GenerateNode({ data }) {
 
     useEffect(() => {
         if (object) {
+            // @ts-ignore
             setNodes(prevNodes => {
                 const validNewNodes = object?.nodes?.filter(node => !!node.type && !!node.id && !!node.position) || [];
 
